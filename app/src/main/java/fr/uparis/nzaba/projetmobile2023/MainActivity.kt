@@ -1,5 +1,6 @@
 package fr.uparis.nzaba.projetmobile2023
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +49,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(model: MainViewModel = viewModel()) {
     val sujets by model.sujetsFlow.collectAsState(listOf())
-
+    val context = LocalContext.current
     Column {
         Text(
             text = "Hello World!",
@@ -56,6 +58,12 @@ fun Greeting(model: MainViewModel = viewModel()) {
             model.addSujet()
         }) {
             Text(text = "Ajout")
+        }
+        Button(onClick = {
+            val iii = Intent(context,GererSujetsActivity::class.java)
+            context.startActivity (iii)
+        }) {
+            Text("Gerer Sujet")
         }
         LazyColumn(
             Modifier
