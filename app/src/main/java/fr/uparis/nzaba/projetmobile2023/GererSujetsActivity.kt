@@ -2,7 +2,10 @@ package fr.uparis.nzaba.projetmobile2023
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,11 +33,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
@@ -43,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -52,7 +61,7 @@ import fr.uparis.nzaba.projetmobile2023.model.GererSujetViewModel
 import fr.uparis.nzaba.projetmobile2023.ui.theme.Projetmobile2023Theme
 
 class GererSujetsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+    /*override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Projetmobile2023Theme {
@@ -61,6 +70,35 @@ class GererSujetsActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
 
+                ) {
+                    EcranGererSujets()
+                }
+            }
+        }
+    }*/
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val backCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Gérer la logique de retour ici
+                // Par exemple, revenir à l'activité principale (MainActivity)
+                val intent = Intent(this@GererSujetsActivity, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+        }
+
+        onBackPressedDispatcher.addCallback(
+            this, backCallback
+        )
+
+        setContent {
+            Projetmobile2023Theme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     EcranGererSujets()
                 }
@@ -76,12 +114,16 @@ fun EcranGererSujets(model: GererSujetViewModel = viewModel()) {
     val sujetField by model.sujetField
     val boutonModif by model.textBoutonModif
     val sujets by model.sujetsFlow.collectAsState(listOf())
+    val snackbarHostState = remember { SnackbarHostState() }
+    val erreur by model.erreurIns
+    val cpt by model.compteurIns
 
-    Scaffold(topBar = { MyTopBar() }, bottomBar = { MyBottomBar(navController,model::versAjout) }) { paddingV ->
+    Scaffold(topBar = { MyTopBar() }, bottomBar = { MyBottomBar(navController,model::versAjout) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
         NavHost(navController = navController,startDestination =
         "list",modifier = Modifier.padding(paddingV)) {
             composable("list") { ListeSujet(paddingV,sujets, model::RemplirPourModif, navController) }
-            composable("ajout") { ModifSujet(paddingV,sujetField,model::changeSujet,boutonModif,model::addSujet) }
+            composable("ajout") { ModifSujet(paddingV,sujetField,model::changeSujet,boutonModif,model::addSujet,snackbarHostState,erreur,cpt) }
         }
     }
 }
@@ -98,12 +140,22 @@ fun MyBottomBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     BottomNavigationItem(selected = currentRoute == "list", onClick = {
-        navController.navigate("list") { launchSingleTop = true }
-    }, icon = { Icon(Icons.Default.List, "list") })
+        navController.navigate("list") {
+            launchSingleTop = true
+            Log.d("Navigation", "Navigating to list")
+        }
+    }, icon = { Icon(Icons.Default.List, "liste") })
     BottomNavigationItem(selected = currentRoute == "ajout", onClick = {
+        /*if (currentRoute != "ajout") {
+            versAjout()
+            navController.navigate("ajout") { popUpTo("list") }
+        }*/
         versAjout()
-        navController.navigate("ajout") { popUpTo("list") }
-    }, icon = { Icon(Icons.Default.Add, "ajout") })
+        navController.navigate("ajout") {
+            popUpTo("list")
+            Log.d("Navigation", "Navigating to ajout")
+        }
+    }, icon = { Icon(Icons.Default.Add, "ajouter") })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,8 +165,16 @@ fun ModifSujet(
     value: String,
     onValueChange: (String) -> Unit,
     boutonModif: String,
-    addSujet: () -> Unit
+    addSujet: () -> Unit,
+    snackbarHostState:SnackbarHostState,
+    erreur: Boolean,
+    cpt: Int
+
 ){
+    LaunchedEffect(cpt) {
+        val msg = if (erreur) "erreur d'insertion $cpt" else "insertion réussie $erreur"
+        snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long)
+    }
     Column {
         OutlinedTextField(
             value = value,

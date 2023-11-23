@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface JeuxDao {
-    @Insert(onConflict = ABORT)
-    suspend fun insertSujet(sujet: Sujet)
+    @Insert(onConflict = IGNORE)
+    suspend fun insertSujet(sujet: Sujet) : Long
 
     @Insert(onConflict= IGNORE)
-    suspend fun insertQuestion(question: Question)
+    suspend fun insertQuestion(question: Question) : Long
 
     @Insert(onConflict= IGNORE)
-    suspend fun insertChoix(choix: Choix)
+    suspend fun insertChoix(choix: Choix) : Long
 
     @Query("SELECT * FROM Sujet")
     fun loadSujet(): Flow<List<Sujet>>

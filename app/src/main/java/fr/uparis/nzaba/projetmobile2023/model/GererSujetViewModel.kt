@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import fr.uparis.nzaba.projetmobile2023.JeuxApplication
 import fr.uparis.nzaba.projetmobile2023.data.Sujet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class GererSujetViewModel (private val application: Application) : AndroidViewModel(application) {
@@ -15,6 +16,8 @@ class GererSujetViewModel (private val application: Application) : AndroidViewMo
     var sujetsFlow = dao.loadSujet()
     var sujetField = mutableStateOf("")
     var textBoutonModif = mutableStateOf("Ajouter")
+    var erreurIns= mutableStateOf(false)
+    val compteurIns=mutableStateOf(0)
 
 
     fun versAjout(){
@@ -37,7 +40,9 @@ class GererSujetViewModel (private val application: Application) : AndroidViewMo
     fun addSujet() {
         if(textBoutonModif.value == "Ajouter"){
             viewModelScope.launch(Dispatchers.IO) {
-                dao.insertSujet(Sujet(libelleSujet = sujetField.value))
+                val res=async{dao.insertSujet(Sujet(libelleSujet = sujetField.value))}
+                erreurIns.value= (res.await()== -1L)
+                compteurIns.value ++;
             }
         }else{
 
