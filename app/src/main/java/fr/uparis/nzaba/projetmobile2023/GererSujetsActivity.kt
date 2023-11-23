@@ -16,11 +16,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Checkbox
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.List
@@ -40,9 +43,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
@@ -61,44 +67,15 @@ import fr.uparis.nzaba.projetmobile2023.model.GererSujetViewModel
 import fr.uparis.nzaba.projetmobile2023.ui.theme.Projetmobile2023Theme
 
 class GererSujetsActivity : ComponentActivity() {
-    /*override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Projetmobile2023Theme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-
-                ) {
-                    EcranGererSujets()
-                }
-            }
-        }
-    }*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val backCallback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // Gérer la logique de retour ici
-                // Par exemple, revenir à l'activité principale (MainActivity)
-                val intent = Intent(this@GererSujetsActivity, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
-        }
-
-        onBackPressedDispatcher.addCallback(
-            this, backCallback
-        )
-
         setContent {
             Projetmobile2023Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
+
                 ) {
                     EcranGererSujets()
                 }
@@ -117,13 +94,53 @@ fun EcranGererSujets(model: GererSujetViewModel = viewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
     val erreur by model.erreurIns
     val cpt by model.compteurIns
+    var dialogSupp by remember { mutableStateOf(model.DialogSupp) }
+    var sujetsSelectionnes = model.sujetsSelectionnes
 
     Scaffold(topBar = { MyTopBar() }, bottomBar = { MyBottomBar(navController,model::versAjout) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
         NavHost(navController = navController,startDestination =
         "list",modifier = Modifier.padding(paddingV)) {
-            composable("list") { ListeSujet(paddingV,sujets, model::RemplirPourModif, navController) }
-            composable("ajout") { ModifSujet(paddingV,sujetField,model::changeSujet,boutonModif,model::addSujet,snackbarHostState,erreur,cpt) }
+            composable("list") {
+                Column {
+                    Button(
+                        onClick = {
+                            if (sujetsSelectionnes.isNotEmpty()) {
+                                // Afficher la boîte de dialogue de confirmation avant la suppression
+                                dialogSupp.value = true
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text("Supprimer sélectionnés")
+                    }
+                    ListeSujet(paddingV,sujets, model::RemplirPourModif, navController,sujetsSelectionnes,model::updateSujetsSelectionnes)
+                }
+                if (dialogSupp.value) {
+                    DialogSupp(
+                        annuler = { dialogSupp.value = false },
+                        supprimer = {
+                            // Supprimer les sujets sélectionnés
+                            model.deleteSujetsSelectionnes()
+                            dialogSupp.value = false
+                        }
+                    )
+                }
+            }
+            composable("ajout") {
+                ModifSujet(
+                    paddingV,
+                    sujetField,
+                    model::changeSujet,
+                    boutonModif,
+                    model::addSujet,
+                    snackbarHostState,
+                    erreur,
+                    cpt
+                )
+            }
         }
     }
 }
@@ -146,10 +163,6 @@ fun MyBottomBar(
         }
     }, icon = { Icon(Icons.Default.List, "liste") })
     BottomNavigationItem(selected = currentRoute == "ajout", onClick = {
-        /*if (currentRoute != "ajout") {
-            versAjout()
-            navController.navigate("ajout") { popUpTo("list") }
-        }*/
         versAjout()
         navController.navigate("ajout") {
             popUpTo("list")
@@ -171,10 +184,10 @@ fun ModifSujet(
     cpt: Int
 
 ){
-    LaunchedEffect(cpt) {
+    /*LaunchedEffect(cpt) {
         val msg = if (erreur) "erreur d'insertion $cpt" else "insertion réussie $erreur"
         snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Long)
-    }
+    }*/
     Column {
         OutlinedTextField(
             value = value,
@@ -197,16 +210,19 @@ fun ListeSujet(
     padding: PaddingValues,
     sujets: List<Sujet>,
     remplir: (Sujet) -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    sujetSelectionne: List<Sujet>,
+    updateSujetSelectionne: (List<Sujet>) -> Unit,
 ){
     LazyColumn(
         Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.5f)) {
+            .fillMaxHeight(1f)) {
         itemsIndexed(sujets) {
-                index, item -> UnSujet(index = index, item = item,remplir,navController)
+                index, item -> UnSujet(index = index, item = item,remplir,navController,sujetSelectionne,updateSujetSelectionne)
         }
     }
+
 }
 
 @Composable
@@ -214,7 +230,9 @@ fun UnSujet(
     index: Int,
     item: Sujet,
     remplir: (Sujet) -> Unit,
-    navController: NavHostController
+    navController: NavHostController,
+    sujetSelectionne: List<Sujet>,
+    updateSujetSelectionne: (List<Sujet>) -> Unit
 ) {
     val col=when{
         index%2==0 -> colorResource(id = R.color.purple_200)
@@ -235,11 +253,32 @@ fun UnSujet(
             }) {
                 Text(text = "Modifier")
             }
-
+            Checkbox(
+                checked = sujetSelectionne.contains(item),
+                onCheckedChange = {
+                    val selectedSet = sujetSelectionne.toMutableList()
+                    if (it) {
+                        selectedSet.add(item)
+                    } else {
+                        selectedSet.remove(item)
+                    }
+                    updateSujetSelectionne(selectedSet)
+                },
+                modifier = Modifier.padding(8.dp)
+            )
         }
     }
 }
 
+@Composable
+fun DialogSupp(annuler: ()-> Unit, supprimer: () -> Unit){
+    AlertDialog(
+        text = {Text("Es-tu sûr de supprimer?")},
+        onDismissRequest =  annuler,
+        confirmButton = {Button(onClick = supprimer){Text("Oui")}},
+        dismissButton = {Button(onClick = annuler){Text("Non")}}
+    )
+}
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview2() {

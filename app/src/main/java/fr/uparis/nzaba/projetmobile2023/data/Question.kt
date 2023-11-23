@@ -13,8 +13,8 @@ import androidx.room.PrimaryKey
     ],
     foreignKeys = [
         ForeignKey(
-            entity = Sujet::class,parentColumns = ["libelleSujet"],
-            childColumns = ["libelleSujet"],
+            entity = Sujet::class,parentColumns = ["idSujet"],
+            childColumns = ["idSujet"],
             onDelete = ForeignKey.CASCADE)
     ]
 )
@@ -25,5 +25,5 @@ data class Question (
     val rep: String,
     val statut: Int,
     val nextDate: String,
-    val libelleSujet : String
+    val idSujet : String
 )

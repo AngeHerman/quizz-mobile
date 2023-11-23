@@ -4,7 +4,15 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity (
+    indices = [
+        Index( value = [ "libelleSujet"],
+            unique = true
+        )
+    ]
+)
 data class Sujet (
-    @PrimaryKey() val libelleSujet : String
+    @PrimaryKey(autoGenerate = true)
+    val idSujet: Int = 0,
+    val libelleSujet : String
 )
