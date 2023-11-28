@@ -1,28 +1,39 @@
 package fr.uparis.nzaba.projetmobile2023.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.ABORT
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface JeuxDao {
-    @Insert(onConflict = ABORT)
-    suspend fun insertSujet(sujet: Sujet)
+    @Insert(onConflict = IGNORE)
+    suspend fun insertSujet(sujet: Sujet) : Long
+
+    @Update(onConflict = ABORT)
+    suspend fun updateSujet(sujet: Sujet) : Int
+
+    @Delete
+    suspend fun deleteSujet(sujet: Sujet)
+
+    /*@Query("UPDATE Sujet SET libelleSujet = :newLibelleSujet WHERE libelleSujet = :oldLibelleSujet")
+    suspend fun updateSujet(newLibelleSujet: String, oldLibelleSujet: String) : Int*/
 
     @Insert(onConflict= IGNORE)
-    suspend fun insertQuestion(question: Question)
+    suspend fun insertQuestion(question: Question) : Long
 
     @Insert(onConflict= IGNORE)
-    suspend fun insertChoix(choix: Choix)
+    suspend fun insertChoix(choix: Choix) : Long
 
     @Query("SELECT * FROM Sujet")
     fun loadSujet(): Flow<List<Sujet>>
 
-    @Query("SELECT * FROM Question WHERE libelleSujet = :libelleSujet")
-    fun loadQuestion(libelleSujet: String): Flow<List<Question>>
+    @Query("SELECT * FROM Question WHERE idSujet = :idSujet")
+    fun loadQuestion(idSujet: Int): Flow<List<Question>>
 
     @Query("SELECT * FROM Choix WHERE idQuestion = :idQuestion")
     fun loadChoixReponse(idQuestion: Int): Flow<List<Choix>>

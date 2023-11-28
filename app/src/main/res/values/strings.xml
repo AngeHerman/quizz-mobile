@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">projetmobile2023</string>
+    <string name="title_activity_gerer_jeux">GererJeux</string>
 </resources>
