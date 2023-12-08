@@ -50,6 +50,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -214,6 +215,7 @@ fun ListeSujet(
     sujetSelectionne: List<Sujet>,
     updateSujetSelectionne: (List<Sujet>) -> Unit,
 ){
+
     LazyColumn(
         Modifier
             .fillMaxWidth()
@@ -234,6 +236,7 @@ fun UnSujet(
     sujetSelectionne: List<Sujet>,
     updateSujetSelectionne: (List<Sujet>) -> Unit
 ) {
+
     val col=when{
         index%2==0 -> colorResource(id = R.color.purple_200)
         else -> colorResource(id = R.color.purple_700 )

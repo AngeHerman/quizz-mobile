@@ -65,6 +65,13 @@ fun Greeting(model: MainViewModel = viewModel()) {
         }) {
             Text("Gerer Sujet")
         }
+
+        Button(onClick = {
+            val iii = Intent(context,GererQuestionsActivity::class.java)
+            context.startActivity (iii)
+        }) {
+            Text("Gerer les questions")
+        }
         LazyColumn(
             Modifier
                 .fillMaxWidth()

@@ -25,5 +25,5 @@ data class Question (
     val rep: String,
     val statut: Int,
     val nextDate: String,
-    val idSujet : String
+    val idSujet : Int
 )
