@@ -29,6 +29,9 @@ interface JeuxDao {
     @Insert(onConflict= IGNORE)
     suspend fun insertChoix(choix: Choix) : Long
 
+    @Update(onConflict = ABORT)
+    suspend fun updateChoix(choix : Choix)
+
     @Query("SELECT * FROM Sujet")
     fun loadSujet(): Flow<List<Sujet>>
 

@@ -1,8 +1,10 @@
 package fr.uparis.nzaba.projetmobile2023
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -22,10 +24,12 @@ import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,9 +42,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,6 +55,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import fr.uparis.nzaba.projetmobile2023.data.Choix
 import fr.uparis.nzaba.projetmobile2023.data.Question
 import fr.uparis.nzaba.projetmobile2023.data.Sujet
 import fr.uparis.nzaba.projetmobile2023.model.GererQuestionViewModel
@@ -95,24 +102,39 @@ class GererQuestionsActivity : ComponentActivity() {
     @Composable
     fun QuestionContent(question: Question, navController: NavHostController){
         Column{
+
             Row {
                 Text(question.texte)
-                QuestionButton { navController.navigate("edit") }
+                Box(Modifier.fillMaxWidth(),contentAlignment = Alignment.CenterEnd) {
+                    deleteQuestionButton()
+                }
+
+
             }
-            Reponse(answer = question.rep)
+
+            Box(
+                contentAlignment = Alignment.BottomStart
+            ) {
+                Reponse(answer = question.rep)
+
+            }
         }
 
     }
+
     @Composable
-    fun QuestionButton(modifyPageRedirect : () -> Unit){
-        Button(onClick = {modifyPageRedirect}){
-            Text("Modifier")
+    fun Reponse(answer : String){
+        Card {
+            Text("Réponse :")
+            Spacer(Modifier.width(5.dp))
+            Text(answer,Modifier.padding(1.dp))
         }
     }
+
     @Composable
-    fun addQuestionButton(){
+    fun addQuestionButton(addQuestiontoDB : () -> Unit){
         Button(
-            onClick = {},
+            onClick = addQuestiontoDB,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp))
@@ -126,21 +148,13 @@ class GererQuestionsActivity : ComponentActivity() {
         Button(
             onClick = {},
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(16.dp))
         {
-            Text("Supprimer questions sélectionnés")
+            Icon(Icons.Default.Delete, "delete")
+
         }
     }
 
-    @Composable
-    fun Reponse(answer : String){
-        Card {
-            Text("Réponse :")
-            Spacer(Modifier.width(5.dp))
-            Text(answer,Modifier.padding(1.dp))
-        }
-    }
 
     @Composable
     fun ListeQuestions(questions : List<Question>,navController: NavHostController) {
@@ -154,29 +168,35 @@ class GererQuestionsActivity : ComponentActivity() {
                 index,item -> UneQuestion(question = item,navController)
             }
         }
-        println("QUESTIONS TAILLE :" + questions.size)
     }
     @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun SubjectsDropDownMenu(
         subjectList : List<Sujet>,
         selectedSubject : Sujet,
+        alignement: Alignment,
         changeSelectedSubject : (Sujet) -> Unit){
 
         var expanded by remember {mutableStateOf(false)}
 
         Spacer(Modifier.height(5.dp))
-
-        ExposedDropdownMenuBox(
-            expanded = expanded, onExpandedChange ={expanded = it},
+        Box(Modifier.fillMaxWidth(),
+            contentAlignment = alignement
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = expanded, onExpandedChange = { expanded = it },
             ) {
-            TextField(
-                value = selectedSubject.libelleSujet,
-                onValueChange = {},
-                readOnly = true)
-            ExposedDropdownMenu(expanded = expanded , onDismissRequest = { expanded = false }) {
-                subjectList.forEach(){
-                    SubjectDropDownItem(selectedOption = {expanded = false;changeSelectedSubject(it);}, text = it.libelleSujet)
+                TextField(
+                    value = selectedSubject.libelleSujet,
+                    onValueChange = {},
+                    readOnly = true
+                )
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    subjectList.forEach() {
+                        SubjectDropDownItem(selectedOption = {
+                            expanded = false;changeSelectedSubject(it);
+                        }, text = it.libelleSujet)
+                    }
                 }
             }
         }
@@ -187,7 +207,136 @@ class GererQuestionsActivity : ComponentActivity() {
             Text(text)
         }
     }
+    @Composable
+    fun SubjectDropDownMenuForCreation(
+        subjectList:List<Sujet>,
+        selectedSubject: Sujet,
+        changeSelectedSubject: (Sujet) -> Unit
+    ){
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(text = "Sujet : ",Modifier.padding(horizontal = 10.dp))
+        Box(
+            Modifier
+                .padding(horizontal = 10.dp)
+                .fillMaxWidth()) {
+            SubjectsDropDownMenu(
+                subjectList = subjectList,
+                selectedSubject = selectedSubject,
+                changeSelectedSubject = changeSelectedSubject,
+                alignement = Alignment.TopStart
+            )
+        }
+    }
+    @SuppressLint("UnrememberedMutableState")
+    @Composable
+    fun CreationPage(
+        subjectList:List<Sujet>,
+        selectedSubject: Sujet,
+        answer : String,
+        editAnswer : (String) -> Unit,
+        question : String,
+        editQuestionText : (String) -> Unit,
+        answerList : MutableList<Choix>,
+        addQuestiontoDB: () -> Unit,
+        changeSelectedSubject: (Sujet) -> Unit
+      ){
 
+        var display by remember { mutableStateOf(false) }
+        var count by remember { mutableStateOf(0) }
+
+        LazyColumn{
+            item(1) {
+                SubjectDropDownMenuForCreation(subjectList, selectedSubject, changeSelectedSubject)
+                TextfieldQuestion(text = "Question : ", addToString = editQuestionText ,question)
+                CheckBoxQCM(display = display, changeDisplay = { display = !display })
+            }
+
+            item(2){
+            if(!display){
+                TextfieldQuestion(text = "Réponse : " , addToString = editAnswer,answer)
+            }else{
+                AnswerforQCM(count,answerList) { count++ }
+                }
+            }
+            item(3) {
+                Spacer(modifier = Modifier.height(5.dp))
+                addQuestionButton(addQuestiontoDB)
+            }
+
+        }
+
+    }
+    @SuppressLint("UnrememberedMutableState")
+    @Composable
+    fun AnswerforQCM(count : Int,choiceList : MutableList<Choix>,increaseCount : () -> Unit,){
+        Column {
+                for (i in 1..count ){
+
+                    var t = mutableStateOf("")
+                    var bon by remember { mutableStateOf(0)}
+                    Row(){
+                       TextfieldQuestion(text = "Réponse ${i}: " , addToString = {t.value = it},t.value)
+                       // CheckBoxAnswerQCM(display = , changeDisplay = )
+                    }
+
+                    /*var c = Choix(texte = t.value,bon = bon, idQuestion = 0)
+
+                    choiceList.find { it.idChoix == c.idChoix }.apply {
+                        if(this != null) choiceList.remove(this)
+                    }
+                    choiceList.add(c)*/
+                }
+        }
+        Spacer(modifier = Modifier.width(5.dp))
+        Button(onClick = increaseCount) {
+            Icon(Icons.Default.Add, "add")
+        }
+
+
+    }
+    @Composable
+    fun CheckBoxQCM(display : Boolean, changeDisplay : ((Boolean) -> Unit)?){
+        Row(Modifier.padding(10.dp)) {
+            Text("QCM : ")
+            Spacer(modifier = Modifier.width(5.dp))
+            Checkbox(checked = display, onCheckedChange = changeDisplay)
+        }
+    }
+
+    @Composable
+    fun CheckBoxAnswerQCM(display : Boolean, changeDisplay : ((Boolean) -> Unit)?){
+        Row(Modifier.padding(10.dp)) {
+            Text("QCM : ")
+            Spacer(modifier = Modifier.width(5.dp))
+            Checkbox(checked = display, onCheckedChange = changeDisplay)
+        }
+    }
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun DatePickerField(){
+
+        //val context = LocalContext.current
+        //DatePicker(context)
+
+    }
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : String){
+        Spacer(modifier = Modifier.height(5.dp))
+        Box(
+            Modifier
+                .padding(10.dp)
+                .fillMaxWidth()){
+
+            Column {
+                Text(text)
+                Spacer(Modifier.width(5.dp))
+                TextField(value = value, onValueChange = addToString)
+            }
+        }
+    }
+
+    @SuppressLint("UnrememberedMutableState")
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ScaffoldQuestion(
@@ -198,7 +347,15 @@ class GererQuestionsActivity : ComponentActivity() {
 
         val sujets by model.sujetsFlow.collectAsState(listOf())
         var selectedSubject by remember {mutableStateOf(Sujet(3,""))}
+        var selectedSubject2 by remember {mutableStateOf(Sujet(3,""))}
+
         val questions by model.questionFlow.collectAsState(listOf())
+        var answerList = mutableStateListOf<Choix>()
+
+        var answer by remember { mutableStateOf("") }
+        var questionText by remember { mutableStateOf("")}
+
+
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -212,8 +369,8 @@ class GererQuestionsActivity : ComponentActivity() {
             bottomBar = {
                 MyBottomBar(
                     navController = navController,
-                    navigateTo = {navController.navigate("l")},
-                    navigateTo2 = {navController.navigate("edit")},
+                    navigateTo = {navController.navigate("l"){launchSingleTop = true }},
+                    navigateTo2 = {navController.navigate("edit"){popUpTo("l") }},
                     currentRoute = currentRoute
                 )
             },
@@ -230,7 +387,7 @@ class GererQuestionsActivity : ComponentActivity() {
 
                                 Column {
 
-                                    SubjectsDropDownMenu(subjectList = sujets, selectedSubject) {
+                                    SubjectsDropDownMenu(subjectList = sujets, selectedSubject,Alignment.TopCenter) {
                                         selectedSubject = it;
                                         (model::updateSubjectID)(selectedSubject.idSujet)
                                     }
@@ -247,7 +404,30 @@ class GererQuestionsActivity : ComponentActivity() {
                             }
 
                             composable("edit"){
-                                println("TEST1")
+                                CreationPage(
+                                    sujets,
+                                    selectedSubject2,
+                                    answer,
+                                    {
+                                        answer = it;
+                                        (model::addAnswer)(answer);
+                                    },
+                                    questionText,
+                                    {
+                                        questionText = it;
+                                        (model::addQuestionText)(questionText)
+                                    },
+                                    answerList, {
+
+                                        (model::addQuestion)()
+                                    /*
+                                        for (i in 0..answerList.size){
+                                            (model::createQuestionChoice)(answerList[i].texte,answerList[i].bon,model.questionID.value)
+                                        }*/
+
+                                    },{
+                                    selectedSubject2 = it;
+                                    (model::updateSubjectIDCreation)(selectedSubject2.idSujet)})
 
                             }
                     }
@@ -277,7 +457,7 @@ class GererQuestionsActivity : ComponentActivity() {
                 { Icon(Icons.Default.List, "liste") },
                 this)
             MyBottomBarItem(
-                { navigateTo2 },
+                 navigateTo2 ,
                 currentRoute == "edit",
                 { Icon(Icons.Default.Add, "ajouter") },
                 this)

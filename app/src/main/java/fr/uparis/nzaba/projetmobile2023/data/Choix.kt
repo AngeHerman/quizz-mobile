@@ -19,3 +19,4 @@ class Choix (
     val bon: Int,
     val idQuestion: Int
 )
+

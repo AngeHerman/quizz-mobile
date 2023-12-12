@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.uparis.nzaba.projetmobile2023.JeuxApplication
+import fr.uparis.nzaba.projetmobile2023.data.Choix
 import fr.uparis.nzaba.projetmobile2023.data.Sujet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -27,36 +28,82 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
 
     var questionField = mutableStateOf("")
     var repField = mutableStateOf("")
+    var qcmInt = mutableStateOf(0)
+    var statutInt = mutableStateOf(0)
+    var nextDate = mutableStateOf("")
+    var subjectID = mutableStateOf(0)
+
+    var choiceText = mutableStateOf("")
+    var rightChoice = mutableStateOf(0)
+
+
     var error = mutableStateOf(false)
     var selectedQuestion = mutableStateListOf<Question>()
     var idsujet = mutableStateOf(2)
     var sujetsFlow = dao.loadSujet()
     var questionFlow = dao.loadQuestion(idsujet.value)
-    var questionList = listOf<Question>()
+    var questionID = mutableStateOf(0)
 
+
+    fun addStatutInt(statut : Int){
+        statutInt.value = statut
+    }
+    fun addQcmInt(qcm : Int){
+        qcmInt.value = qcm
+    }
+    fun addAnswer(answer : String){
+        repField.value = answer
+    }
+
+    fun addQuestionText(question : String){
+        questionField.value = question
+    }
 
     fun updateSubjectID(updated : Int){
         idsujet.value = updated
     }
-    fun addQuestion() {
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val res = async {
-                dao.insertQuestion(
-                    Question(
-                        qcm = 0,
-                        texte = questionField.value,
-                        rep = repField.value,
-                        statut = 0,
-                        nextDate = "",
-                        idSujet = idsujet.value
-                    )
-                )
+    fun updateSubjectIDCreation(updated : Int){
+        subjectID.value = updated
+    }
+
+   // fun u
+
+    fun createQuestionChoice(texte : String, bon : Int, idQuestion: Int){
+        viewModelScope.launch(Dispatchers.IO){
+            try {
+                val res = dao.insertChoix(Choix(
+                    texte = texte,
+                    bon = bon,
+                    idQuestion = idQuestion))
+            } catch (e: SQLiteConstraintException){
+
             }
+        }
+    }
+    fun addQuestion(){
+        viewModelScope.launch(Dispatchers.IO) {
+            println("AAAAAAAAAAAAAAAAAAAA\n")
+            val q =  Question(
+                qcm = qcmInt.value,
+                texte = questionField.value,
+                rep = repField.value,
+                statut = statutInt.value,
+                nextDate = "",
+                idSujet = subjectID.value
+            )
+            val res = async {
+                dao.insertQuestion(q)
+            }
+
             error.value = (res.await() == -1L)
 
-        }
+            if(error.value) {  }
+            else{
+                questionID.value = q.idQuestion
+            }
 
+        }
     }
 
     fun deleteQuestion() {
