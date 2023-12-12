@@ -268,23 +268,26 @@ class GererQuestionsActivity : ComponentActivity() {
     }
     @SuppressLint("UnrememberedMutableState")
     @Composable
-    fun AnswerforQCM(count : Int,choiceList : MutableList<Choix>,increaseCount : () -> Unit,){
+    fun AnswerforQCM(
+        count : Int,
+        choiceList : MutableList<Choix>,
+        increaseCount : () -> Unit,
+        ){
+
+        var b = mutableStateOf(false)
         Column {
                 for (i in 1..count ){
 
                     var t = mutableStateOf("")
-                    var bon by remember { mutableStateOf(0)}
+
                     Row(){
                        TextfieldQuestion(text = "Réponse ${i}: " , addToString = {t.value = it},t.value)
-                       // CheckBoxAnswerQCM(display = , changeDisplay = )
+                        //CheckBoxAnswerQCM(rightAnswer =, changeRightAnswer = {b })
                     }
 
-                    /*var c = Choix(texte = t.value,bon = bon, idQuestion = 0)
+                    var c = Choix(texte = t.value,bon = 1, idQuestion = 0)
 
-                    choiceList.find { it.idChoix == c.idChoix }.apply {
-                        if(this != null) choiceList.remove(this)
-                    }
-                    choiceList.add(c)*/
+
                 }
         }
         Spacer(modifier = Modifier.width(5.dp))
@@ -293,6 +296,15 @@ class GererQuestionsActivity : ComponentActivity() {
         }
 
 
+    }
+    fun addtoAnswerList(
+        choiceList : MutableList<Choix>,
+        c : Choix
+        ){
+        choiceList.find { it.idChoix == c.idChoix }.apply {
+            if(this != null) choiceList.remove(this)
+        }
+        choiceList.add(c)
     }
     @Composable
     fun CheckBoxQCM(display : Boolean, changeDisplay : ((Boolean) -> Unit)?){
@@ -304,11 +316,10 @@ class GererQuestionsActivity : ComponentActivity() {
     }
 
     @Composable
-    fun CheckBoxAnswerQCM(display : Boolean, changeDisplay : ((Boolean) -> Unit)?){
+    fun CheckBoxAnswerQCM(rightAnswer : Boolean, changeRightAnswer : ((Boolean) -> Unit)?){
         Row(Modifier.padding(10.dp)) {
-            Text("QCM : ")
             Spacer(modifier = Modifier.width(5.dp))
-            Checkbox(checked = display, onCheckedChange = changeDisplay)
+            Checkbox(checked = rightAnswer, onCheckedChange = changeRightAnswer)
         }
     }
     @OptIn(ExperimentalMaterial3Api::class)
@@ -420,10 +431,11 @@ class GererQuestionsActivity : ComponentActivity() {
                                     answerList, {
 
                                         (model::addQuestion)()
-                                    /*
+
                                         for (i in 0..answerList.size){
-                                            (model::createQuestionChoice)(answerList[i].texte,answerList[i].bon,model.questionID.value)
-                                        }*/
+
+                                            (model::createQuestionChoice)(model.questionID.value)
+                                        }
 
                                     },{
                                     selectedSubject2 = it;

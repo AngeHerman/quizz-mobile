@@ -45,11 +45,12 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     var questionID = mutableStateOf(0)
 
 
-    fun addStatutInt(statut : Int){
-        statutInt.value = statut
+    fun addChoiceText(text : String){
+        choiceText.value = text
     }
-    fun addQcmInt(qcm : Int){
-        qcmInt.value = qcm
+    fun addRightChoice(rightAnswer : Int){
+        rightChoice.value = rightAnswer
+
     }
     fun addAnswer(answer : String){
         repField.value = answer
@@ -67,14 +68,12 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         subjectID.value = updated
     }
 
-   // fun u
-
-    fun createQuestionChoice(texte : String, bon : Int, idQuestion: Int){
+    fun createQuestionChoice(idQuestion: Int){
         viewModelScope.launch(Dispatchers.IO){
             try {
                 val res = dao.insertChoix(Choix(
-                    texte = texte,
-                    bon = bon,
+                    texte = choiceText.value,
+                    bon = rightChoice.value,
                     idQuestion = idQuestion))
             } catch (e: SQLiteConstraintException){
 
@@ -83,7 +82,6 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     }
     fun addQuestion(){
         viewModelScope.launch(Dispatchers.IO) {
-            println("AAAAAAAAAAAAAAAAAAAA\n")
             val q =  Question(
                 qcm = qcmInt.value,
                 texte = questionField.value,

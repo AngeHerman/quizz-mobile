@@ -66,72 +66,78 @@ fun Greeting(model: MainViewModel = viewModel()) {
             Text(text = "Ajout")
         }
         Button(onClick = {
-            val iii = Intent(context,GererSujetsActivity::class.java)
-            context.startActivity (iii)
+            val iii = Intent(context, GererSujetsActivity::class.java)
+            context.startActivity(iii)
         }) {
             Text("Gerer Sujet")
         }
 
         Button(onClick = {
-            val iii = Intent(context,GererQuestionsActivity::class.java)
-            context.startActivity (iii)
+            val iii = Intent(context, GererQuestionsActivity::class.java)
+            context.startActivity(iii)
         }) {
             Text("Gerer les questions")
+        }
         Button(onClick = {
-            val iii = Intent(context,ReglerNotifActivity::class.java)
-            context.startActivity (iii)
+            val iii = Intent(context, ReglerNotifActivity::class.java)
+            context.startActivity(iii)
         }) {
             Text("Gerer Rappel")
         }
         LazyColumn(
             Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.5f)) {
+                .fillMaxHeight(0.5f)
+        ) {
             items(sujets) {
                 Row {
                     Text(text = it.libelleSujet ?: "", fontSize = 30.sp)
                 }
             }
         }
-    }
 
+
+    }
 }
 
-fun createChannel(c: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        // Create the NotificationChannel.
-        val name = "MY_CHANNEL"
-        val descriptionText = "notification channel for Periodic project"
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
-        mChannel.description = descriptionText
+    fun createChannel(c: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create the NotificationChannel.
+            val name = "MY_CHANNEL"
+            val descriptionText = "notification channel for Periodic project"
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            val notificationManager =
+                c.getSystemService(ComponentActivity.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(mChannel)
+        }
+    }
+
+    fun createNotif(c: Context) {
+
+        val intent1 = Intent(c, MainActivity::class.java)
+        //val intent2 = Intent(c, ReglerActivity::class.java)
+        val pending1 = PendingIntent.getActivity(c, 1, intent1, PendingIntent.FLAG_IMMUTABLE)
+        //val pending2 = PendingIntent.getActivity(c, 1, intent2, PendingIntent.FLAG_IMMUTABLE)
+        val builder = NotificationCompat.Builder(c, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Il est l'heure de venir jouer")
+            .setContentText("Viens approfondir tes connaissances")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT).setAutoCancel(true)
+            .setContentIntent(pending1).setCategory(Notification.CATEGORY_REMINDER)
+        //.addAction(androidx.core.R.drawable.ic_call_answer, "réglages", pending2)
+        val myNotif = builder.build()
         val notificationManager =
             c.getSystemService(ComponentActivity.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(mChannel)
+        notificationManager.notify(44, myNotif)
     }
-}
 
-fun createNotif(c: Context) {
 
-    val intent1 = Intent(c, MainActivity::class.java)
-    //val intent2 = Intent(c, ReglerActivity::class.java)
-    val pending1 = PendingIntent.getActivity(c, 1, intent1, PendingIntent.FLAG_IMMUTABLE)
-    //val pending2 = PendingIntent.getActivity(c, 1, intent2, PendingIntent.FLAG_IMMUTABLE)
-    val builder = NotificationCompat.Builder(c, CHANNEL_ID).setSmallIcon(R.drawable.ic_launcher_foreground)
-        .setContentTitle("Il est l'heure de venir jouer").setContentText("Viens approfondir tes connaissances")
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT).setAutoCancel(true)
-        .setContentIntent(pending1).setCategory(Notification.CATEGORY_REMINDER)
-        //.addAction(androidx.core.R.drawable.ic_call_answer, "réglages", pending2)
-    val myNotif = builder.build()
-    val notificationManager =
-        c.getSystemService(ComponentActivity.NOTIFICATION_SERVICE) as NotificationManager
-    notificationManager.notify(44, myNotif)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Projetmobile2023Theme {
-        Greeting()
+    @Preview(showBackground = true)
+    @Composable
+    fun GreetingPreview() {
+        Projetmobile2023Theme {
+            Greeting()
+        }
     }
-}

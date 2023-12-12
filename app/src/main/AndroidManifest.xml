@@ -20,6 +20,7 @@
             android:exported="false"
             android:label="GererQuestions"
             android:theme="@style/Theme.Projetmobile2023"/>
+        <activity
             android:name=".ReglerNotifActivity"
             android:exported="false"
             android:label="@string/title_activity_regler_notif"

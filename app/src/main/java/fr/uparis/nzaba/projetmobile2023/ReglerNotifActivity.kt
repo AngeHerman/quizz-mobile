@@ -80,8 +80,8 @@ class ReglerNotifActivity : ComponentActivity() {
 @Composable
 fun EcranReglage(size: WindowSizeClass,model: ReglerNotifViewModel = viewModel()){
     when(size.widthSizeClass){
-        WindowWidthSizeClass.Compact-> PageReglagePortrait()
-        else-> EcranReglageLandscape()
+        WindowWidthSizeClass.Compact-> PageReglagePortrait(model)
+        else-> EcranReglageLandscape(model)
     }
 }
 
@@ -221,7 +221,7 @@ fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel()) {
                         model.save(newConfig)
                         model.schedule(newConfig)
                     }) {
-                        Text("Enregistrer")
+                        Text(text = "Enregistrer", Modifier.padding(5.dp))
                     }
                 }
             }
