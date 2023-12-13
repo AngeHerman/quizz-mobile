@@ -19,14 +19,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -35,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerLayoutType
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
@@ -81,36 +75,8 @@ class ReglerNotifActivity : ComponentActivity() {
 fun EcranReglage(size: WindowSizeClass,model: ReglerNotifViewModel = viewModel()){
     when(size.widthSizeClass){
         WindowWidthSizeClass.Compact-> PageReglagePortrait(model)
-        else-> EcranReglageLandscape(model)
+        else-> PageReglageLandscape(model)
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyTopBar(s : String){
-    //TopAppBar(title = { Text(s , style = MaterialTheme.typography.displayMedium) }, backgroundColor = MaterialTheme.colorScheme.primaryContainer)
-    TopAppBar(
-        title = {
-            Text("Small Top App Bar")
-        },
-        navigationIcon = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Localized description"
-                )
-            }
-        },
-        actions = {
-            // Ajoutez le bouton du Drawer ici
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Localized description"
-                )
-            }
-        },
-    )
 }
 
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -127,10 +93,30 @@ fun PageReglagePortrait(model: ReglerNotifViewModel = viewModel()){
     )
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PageReglageLandscape(model: ReglerNotifViewModel = viewModel()){
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    NavigationDrawer(
+        model = model,
+        drawerState = drawerState,
+        scope = scope,
+        customComposable = { model, onMenuIconClick -> CustomComposableLandscape(model, onMenuIconClick) }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomComposablePortrait(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
     EcranReglagePortrait(model = model as ReglerNotifViewModel, onMenuIconClick = onMenuIconClick)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomComposableLandscape(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
+    EcranReglageLandscape(model = model as ReglerNotifViewModel, onMenuIconClick = onMenuIconClick)
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,7 +134,7 @@ fun EcranReglagePortrait(model: ReglerNotifViewModel = viewModel(),onMenuIconCli
     }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(        topBar = { TopBarMain("Réglages heure", onMenuIconClick) },
+    Scaffold(        topBar = { TopBarOther("Réglages heure", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column(
             modifier = Modifier
@@ -178,7 +164,7 @@ fun EcranReglagePortrait(model: ReglerNotifViewModel = viewModel(),onMenuIconCli
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel()) {
+fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel(),onMenuIconClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     val prefConfig= runBlocking {model.prefConfig.first()  }
     val clockState = rememberTimePickerState (
@@ -192,7 +178,7 @@ fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel()) {
         Log.d("permissions", if(it)"granted" else "denied")
     }
     Scaffold(
-        topBar = { MyTopBar("Réglages heure") },
+        topBar = { TopBarOther("Réglages heure", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column {
             Spacer(modifier = Modifier.height(70.dp))

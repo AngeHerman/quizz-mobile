@@ -63,12 +63,16 @@ fun TopBarOther(
     onMenuIconClick: () -> Unit,
    // context : Context
 ) {
+    val context = LocalContext.current
     TopAppBar(
         title = {
             Text(s)
         },
         navigationIcon = {
-            IconButton(onClick = {  }) {
+            IconButton(onClick = {
+                val intent = Intent(context, MainActivity::class.java)
+                context.startActivity(intent)
+            }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Retour derriere"
