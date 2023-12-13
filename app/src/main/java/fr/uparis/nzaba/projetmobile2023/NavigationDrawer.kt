@@ -63,12 +63,16 @@ fun TopBarOther(
     onMenuIconClick: () -> Unit,
    // context : Context
 ) {
+    val context = LocalContext.current
     TopAppBar(
         title = {
             Text(s)
         },
         navigationIcon = {
-            IconButton(onClick = {  }) {
+            IconButton(onClick = {
+                val intent = Intent(context, MainActivity::class.java)
+                context.startActivity(intent)
+            }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Retour derriere"
@@ -101,7 +105,8 @@ fun NavigationDrawer(
     val items = listOf(
         DrawItem(icon = Icons.Default.Home, label = "Home", activityClass = MainActivity::class.java),
         DrawItem(icon = Icons.Default.Create, label = "Gérer sujets", activityClass = GererSujetsActivity::class.java),
-        DrawItem(icon = Icons.Default.Settings, label = "Gérer Rappel", activityClass = ReglerNotifActivity::class.java),
+        DrawItem(icon = Icons.Default.Create, label = "Gérer Questions", activityClass = GererQuestionsActivity::class.java),
+        DrawItem(icon = Icons.Default.Settings, label = "Planifier Rappel", activityClass = ReglerNotifActivity::class.java),
     )
     var selectedItem by remember { mutableStateOf(items[0]) }
 
