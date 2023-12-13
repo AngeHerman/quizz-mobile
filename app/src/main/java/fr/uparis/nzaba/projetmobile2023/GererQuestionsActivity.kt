@@ -41,7 +41,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,21 +67,19 @@ import fr.uparis.nzaba.projetmobile2023.data.Choix
 import fr.uparis.nzaba.projetmobile2023.data.Question
 import fr.uparis.nzaba.projetmobile2023.data.Sujet
 import fr.uparis.nzaba.projetmobile2023.model.GererQuestionViewModel
-import fr.uparis.nzaba.projetmobile2023.model.GererSujetViewModel
 import fr.uparis.nzaba.projetmobile2023.ui.theme.Projetmobile2023Theme
 
 class GererQuestionsActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Projetmobile2023Theme {
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    EcranGererQuestions()
-
+                    EcranQuestion(calculateWindowSizeClass(this))
                 }
             }
         }
@@ -86,10 +87,10 @@ class GererQuestionsActivity : ComponentActivity() {
 }
 
 @Composable
-fun EcranQuestion(size: WindowSizeClass, model: GererSujetViewModel = viewModel()){
+fun EcranQuestion(size: WindowSizeClass, model: GererQuestionViewModel = viewModel()){
     when(size.widthSizeClass){
-        //WindowWidthSizeClass.Compact-> PageSujetPortrait(model)
-        //else-> PageSujetLandscape(model)
+        WindowWidthSizeClass.Compact-> PageQuestionPortrait(model)
+        else-> PageQuestionLandscape(model)
     }
 }
 
@@ -103,7 +104,7 @@ fun PageQuestionPortrait(model: GererQuestionViewModel = viewModel()){
         model = model,
         drawerState = drawerState,
         scope = scope,
-        customComposable = { model, onMenuIconClick -> ComposableSujetPortrait(model, onMenuIconClick) }
+        customComposable = { model, onMenuIconClick -> ComposableQuestionPortrait(model, onMenuIconClick) }
     )
 }
 
@@ -117,25 +118,99 @@ fun PageQuestionLandscape(model: GererQuestionViewModel = viewModel()){
         model = model,
         drawerState = drawerState,
         scope = scope,
-        customComposable = { model, onMenuIconClick -> ComposableSujetLandscape(model, onMenuIconClick) }
+        customComposable = { model, onMenuIconClick -> ComposableQuestionLandscape(model, onMenuIconClick) }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComposableQuestionPortrait(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
-    //EcranGererSujetsPortrait(model = model as GererSujetViewModel, onMenuIconClick = onMenuIconClick)
+    EcranGererQuestionsPortrait(model = model as GererQuestionViewModel, onMenuIconClick = onMenuIconClick)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComposableQuestionLandscape(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
-    //EcranGererSujetsLandscape(model = model as GererSujetViewModel, onMenuIconClick = onMenuIconClick)
+    //EcranGererQuestionsLandscape(model = model as GererQuestionViewModel, onMenuIconClick = onMenuIconClick)
+    EcranGererQuestionsPortrait(model = model as GererQuestionViewModel, onMenuIconClick = onMenuIconClick)
+
 
 }
+@SuppressLint("UnrememberedMutableState")
 @Composable
-fun EcranGererQuestions(model: GererQuestionViewModel = viewModel()){
-    ScaffoldQuestion(model)
+fun EcranGererQuestionsPortrait(model: GererQuestionViewModel = viewModel(),onMenuIconClick: () -> Unit){
+    val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val sujets by model.sujetsFlow.collectAsState(listOf())
+    var selectedSubject by remember {mutableStateOf(Sujet(3,""))}
+    var selectedSubject2 by remember {mutableStateOf(Sujet(3,""))}
+    val questions by model.questionFlow.collectAsState(listOf())
+    var answerList = mutableStateListOf<Choix>()
+    var answer by remember { mutableStateOf("") }
+    var questionText by remember { mutableStateOf("")}
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    (model::updateSubjectID)(selectedSubject.idSujet)
+    Scaffold(
+        topBar = { TopBarOther("Gérer les questions", onMenuIconClick) },
+        bottomBar = {
+            MyBottomBar(
+                navController = navController,
+                navigateTo = {navController.navigate("l"){launchSingleTop = true }},
+                navigateTo2 = {navController.navigate("edit"){popUpTo("l") }},
+                currentRoute = currentRoute
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ){ paddingV ->
+        NavHost(
+            navController = navController,
+            startDestination = "l",
+            modifier = Modifier.padding(paddingV)
+        ){
+            composable("l"){
+                Column {
+                    SubjectsDropDownMenu(subjectList = sujets, selectedSubject,Alignment.TopCenter) {
+                        selectedSubject = it;
+                        (model::updateSubjectID)(selectedSubject.idSujet)
+                    }
+                    (model.reloadQuestions().collectAsState(listOf()).also {
+                        val questions by it
+                        ListeQuestions(questions = questions, navController = navController)
+                    })
+                    ListeQuestions(questions = questions, navController = navController)
+                }
+            }
+            composable("edit"){
+                CreationPage(
+                    sujets,
+                    selectedSubject2,
+                    answer,
+                    {
+                        answer = it;
+                        (model::addAnswer)(answer);
+                    },
+                    questionText,
+                    {
+                        questionText = it;
+                        (model::addQuestionText)(questionText)
+                    },
+                    answerList, {
+
+                        (model::addQuestion)()
+
+                        for (i in 0..answerList.size){
+
+                            (model::createQuestionChoice)(model.questionID.value)
+                        }
+
+                    },{
+                        selectedSubject2 = it;
+                        (model::updateSubjectIDCreation)(selectedSubject2.idSujet)}
+                )
+            }
+        }
+    }
 }
 
 @Composable
