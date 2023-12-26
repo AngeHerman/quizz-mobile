@@ -13,7 +13,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
@@ -79,7 +78,7 @@ fun EcranMain(model: MainViewModel = viewModel(),onMenuIconClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(topBar = { TopBarMain("Jeu", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
-        Row(horizontalArrangement = Arrangement.SpaceBetween){
+        Column(verticalArrangement = Arrangement.SpaceBetween){
             MesBouttons(paddingV,model::addSujet)
         }
     }

@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:name=".JeuxApplication"
         android:allowBackup="true"
@@ -16,10 +17,15 @@
         android:theme="@style/Theme.Projetmobile2023"
         tools:targetApi="31">
         <activity
+            android:name=".TelechargerQuestionActivity"
+            android:exported="false"
+            android:label="@string/title_activity_telecharger_question"
+            android:theme="@style/Theme.Projetmobile2023" />
+        <activity
             android:name=".GererQuestionsActivity"
             android:exported="false"
             android:label="GererQuestions"
-            android:theme="@style/Theme.Projetmobile2023"/>
+            android:theme="@style/Theme.Projetmobile2023" />
         <activity
             android:name=".ReglerNotifActivity"
             android:exported="false"

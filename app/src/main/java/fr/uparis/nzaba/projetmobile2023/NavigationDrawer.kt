@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -107,6 +108,7 @@ fun NavigationDrawer(
         DrawItem(icon = Icons.Default.Create, label = "Gérer sujets", activityClass = GererSujetsActivity::class.java),
         DrawItem(icon = Icons.Default.Create, label = "Gérer Questions", activityClass = GererQuestionsActivity::class.java),
         DrawItem(icon = Icons.Default.Settings, label = "Planifier Rappel", activityClass = ReglerNotifActivity::class.java),
+        DrawItem(icon = Icons.Default.Build, label = "Telecharger Question", activityClass = TelechargerQuestionActivity::class.java)
     )
     var selectedItem by remember { mutableStateOf(items[0]) }
 
