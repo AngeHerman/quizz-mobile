@@ -25,6 +25,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -48,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -66,13 +68,11 @@ class GererQuestionsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Projetmobile2023Theme {
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     EcranGererQuestions()
-
                 }
             }
         }
@@ -86,32 +86,47 @@ class GererQuestionsActivity : ComponentActivity() {
     }
 
 
-
-
+    @SuppressLint("UnrememberedMutableState")
     @Composable
-    fun UneQuestion(question : Question,navController: NavHostController){
+    fun UneQuestion(
+        question : Question,
+        navController: NavHostController,
+        selectedQuestions : List<Question>,
+        addMethod : (Question) -> Unit,
+        deleteFromList :(Question) -> Unit,
+        navigateToEditPage : () -> Unit
+
+    ){
+
         Card(
             Modifier
                 .fillMaxSize()
                 .padding(10.dp)
         ){
-            QuestionContent(question,navController)
+            QuestionContent(question,navController,selectedQuestions,addMethod,deleteFromList,navigateToEditPage)
+
         }
     }
 
     @Composable
-    fun QuestionContent(question: Question, navController: NavHostController){
-        Column{
+    fun QuestionContent(question: Question,
+                        navController: NavHostController,
+                        selectedQuestions : List<Question>,
+                        addMethod : (Question) -> Unit,
+                        deleteFromList :(Question) -> Unit,
+                        navigateToEditPage : () -> Unit){
 
+        Column{
             Row {
                 Text(question.texte)
                 Box(Modifier.fillMaxWidth(),contentAlignment = Alignment.CenterEnd) {
-                    deleteQuestionButton()
+                    Row{
+                        QuestionButton(navigateToEditPage,Modifier.padding(5.dp),Icons.Default.Edit,"")
+                        Spacer(Modifier.width(5.dp))
+                        SelectQuestionCheckBox(question,selectedQuestions,addMethod,deleteFromList)
+                    }
                 }
-
-
             }
-
             Box(
                 contentAlignment = Alignment.BottomStart
             ) {
@@ -121,7 +136,18 @@ class GererQuestionsActivity : ComponentActivity() {
         }
 
     }
-
+    fun addQuestionToSelectedList(addToSelection: Boolean,
+                                  question: Question,
+                                  addMethod : (Question) -> Unit,
+                                  deleteFromList :(Question) -> Unit
+                                  ){
+        if(addToSelection){
+            addMethod(question)
+            println(question)
+        }else{
+            deleteFromList(question)
+        }
+    }
     @Composable
     fun Reponse(answer : String){
         Card {
@@ -132,32 +158,49 @@ class GererQuestionsActivity : ComponentActivity() {
     }
 
     @Composable
-    fun addQuestionButton(addQuestiontoDB : () -> Unit){
+    fun addQuestionButton(addQuestiontoDB : () -> Unit,addString : String){
         Button(
             onClick = addQuestiontoDB,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp))
         {
-            Text("Ajouter Question")
+            Text(addString)
         }
+    }
+    @Composable
+    fun SelectQuestionCheckBox(question: Question,
+                               selectedQuestions : List<Question>,
+                               addMethod : (Question) -> Unit,
+                               deleteFromList :(Question) -> Unit){
+        Checkbox(checked = selectedQuestions.contains(question), onCheckedChange = {addQuestionToSelectedList(it,question,addMethod,deleteFromList)});
+
     }
 
     @Composable
-    fun deleteQuestionButton(){
+    fun QuestionButton(
+        methodForButton: () -> Unit,
+        modifier: Modifier,
+        img : ImageVector,
+        str : String
+    ){
         Button(
-            onClick = {},
-            modifier = Modifier
-                .padding(16.dp))
-        {
-            Icon(Icons.Default.Delete, "delete")
-
+            onClick = methodForButton,
+            modifier = modifier){
+            Text(str)
+            Icon(img, "icon")
         }
     }
 
 
     @Composable
-    fun ListeQuestions(questions : List<Question>,navController: NavHostController) {
+    fun ListeQuestions(
+        questions : List<Question>,
+        navController: NavHostController,
+        selectedQuestions: List<Question>,
+        addMethod : (Question) -> Unit,
+        deleteFromList :(Question) -> Unit,
+        navigateToEditPage : () -> Unit) {
 
         LazyColumn(
             Modifier
@@ -165,7 +208,7 @@ class GererQuestionsActivity : ComponentActivity() {
                 .fillMaxHeight(1f)) {
             itemsIndexed(questions) {
                 //index,item -> Text(item.texte)
-                index,item -> UneQuestion(question = item,navController)
+                index,item -> UneQuestion(question = item, navController,selectedQuestions,addMethod,deleteFromList,navigateToEditPage)
             }
         }
     }
@@ -227,6 +270,30 @@ class GererQuestionsActivity : ComponentActivity() {
             )
         }
     }
+    @Composable
+    fun EditingPage(
+        editQuestionText: (String) -> Unit,
+        question: String,
+        answer: String,
+        editAnswer: (String) -> Unit,
+        editQuestionFromDB: () -> Unit
+                    ){
+        LazyColumn {
+            item {
+                TextfieldQuestion(text = "Question : ", addToString = editQuestionText ,question)
+                Spacer(modifier = Modifier.height(5.dp))
+                TextfieldQuestion(text = "Réponse : " , addToString = editAnswer,answer)
+                Spacer(modifier = Modifier.height(5.dp))
+                QuestionButton(
+                    editQuestionFromDB,
+                    Modifier.padding(16.dp),
+                    Icons.Default.Edit,
+                    "Modifier la question"
+                    )
+            }
+        }
+
+    }
     @SuppressLint("UnrememberedMutableState")
     @Composable
     fun CreationPage(
@@ -260,7 +327,7 @@ class GererQuestionsActivity : ComponentActivity() {
             }
             item(3) {
                 Spacer(modifier = Modifier.height(5.dp))
-                addQuestionButton(addQuestiontoDB)
+                addQuestionButton(addQuestiontoDB,"Ajouter Question")
             }
 
         }
@@ -322,14 +389,7 @@ class GererQuestionsActivity : ComponentActivity() {
             Checkbox(checked = rightAnswer, onCheckedChange = changeRightAnswer)
         }
     }
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun DatePickerField(){
 
-        //val context = LocalContext.current
-        //DatePicker(context)
-
-    }
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : String){
@@ -366,7 +426,7 @@ class GererQuestionsActivity : ComponentActivity() {
         var answer by remember { mutableStateOf("") }
         var questionText by remember { mutableStateOf("")}
 
-
+        var selectedQuestions = model.selectedQuestion
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -378,10 +438,10 @@ class GererQuestionsActivity : ComponentActivity() {
             topBar = {
                 MyTopBar()},
             bottomBar = {
-                MyBottomBar(
+                MyBotBar(
                     navController = navController,
                     navigateTo = {navController.navigate("l"){launchSingleTop = true }},
-                    navigateTo2 = {navController.navigate("edit"){popUpTo("l") }},
+                    navigateTo2 = {navController.navigate("create"){popUpTo("l") }},
                     currentRoute = currentRoute
                 )
             },
@@ -402,19 +462,44 @@ class GererQuestionsActivity : ComponentActivity() {
                                         selectedSubject = it;
                                         (model::updateSubjectID)(selectedSubject.idSujet)
                                     }
-
+                                    QuestionButton(
+                                        {model.deleteQuestion()},
+                                        Modifier
+                                            .padding(16.dp)
+                                            .fillMaxWidth(),
+                                        Icons.Default.Delete,
+                                        "Supprimer les selectionnées"
+                                    )
                                     (model.reloadQuestions().collectAsState(listOf()).also {
                                         val questions by it
-                                        ListeQuestions(questions = questions, navController = navController)
+                                        ListeQuestions(
+                                            questions = questions,
+                                            navController = navController,
+                                            selectedQuestions = selectedQuestions,
+                                            addMethod = {model.addQuestionToSelected(it)} ,
+                                            deleteFromList ={model.removeQuestionFromSelected(it)},
+                                            navigateToEditPage = {
+                                                navController.navigate("modif"){popUpTo("l")}}
+
+                                            )
                                     })
 
-                                    ListeQuestions(questions = questions, navController = navController)
+                                    ListeQuestions(
+                                        questions = questions,
+                                        navController = navController,
+                                        selectedQuestions = selectedQuestions,
+                                        addMethod = {model.addQuestionToSelected(it)} ,
+                                        deleteFromList ={model.removeQuestionFromSelected(it)},
+                                        navigateToEditPage = {
+                                            navController.navigate("modif"){popUpTo("l")}}
+                                        )
+
 
                                 }
 
                             }
 
-                            composable("edit"){
+                            composable("create"){
                                 CreationPage(
                                     sujets,
                                     selectedSubject2,
@@ -433,20 +518,29 @@ class GererQuestionsActivity : ComponentActivity() {
                                         (model::addQuestion)()
 
                                         for (i in 0..answerList.size){
-
                                             (model::createQuestionChoice)(model.questionID.value)
                                         }
 
                                     },{
-                                    selectedSubject2 = it;
-                                    (model::updateSubjectIDCreation)(selectedSubject2.idSujet)})
+                                        selectedSubject2 = it
+                                        println(it.libelleSujet)
+                                        (model::updateSubjectIDCreation)(selectedSubject2.idSujet)})
 
                             }
+                        composable("modif"){
+                            EditingPage(
+                                editQuestionText = {questionText = it},
+                                question = questionText,
+                                answer = answer,
+                                editAnswer ={answer = it}
+                            ) {}
+                        }
                     }
 
 
         }
     }
+
 
     @Composable
     fun MyTopBar(){
@@ -457,7 +551,7 @@ class GererQuestionsActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MyBottomBar(
+    fun MyBotBar(
         navController: NavHostController,
         navigateTo: () -> Unit,
         navigateTo2: () -> Unit,

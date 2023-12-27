@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy.Companion.ABORT
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -23,7 +24,7 @@ interface JeuxDao {
     /*@Query("UPDATE Sujet SET libelleSujet = :newLibelleSujet WHERE libelleSujet = :oldLibelleSujet")
     suspend fun updateSujet(newLibelleSujet: String, oldLibelleSujet: String) : Int*/
 
-    @Insert(onConflict= IGNORE)
+    @Upsert
     suspend fun insertQuestion(question: Question) : Long
 
     @Insert(onConflict= IGNORE)

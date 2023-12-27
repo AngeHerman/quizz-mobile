@@ -68,6 +68,13 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         subjectID.value = updated
     }
 
+    fun addQuestionToSelected(question: Question){
+        selectedQuestion.add(question)
+    }
+    fun removeQuestionFromSelected(question: Question){
+        selectedQuestion.remove(question)
+    }
+
     fun createQuestionChoice(idQuestion: Int){
         viewModelScope.launch(Dispatchers.IO){
             try {
@@ -80,9 +87,25 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
             }
         }
     }
-    fun addQuestion(){
+    fun clearFields(){
+        questionField.value =""
+        repField.value = ""
+        qcmInt.value = 0
+        statutInt.value = 0
+        nextDate.value = ""
+        subjectID.value = 0
+    }
+    fun fillQuestionForUpdate(question: Question){
+        subjectID.value = question.idSujet
+        qcmInt.value = question.qcm
+        statutInt.value = question.statut
+        nextDate.value = question.nextDate
+
+     }
+    fun updateQuestionDB(idQuestion: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val q =  Question(
+            val q = Question(
+                idQuestion = idQuestion,
                 qcm = qcmInt.value,
                 texte = questionField.value,
                 rep = repField.value,
@@ -96,13 +119,37 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
 
             error.value = (res.await() == -1L)
 
-            if(error.value) {  }
-            else{
+            if (error.value) {
+            } else {
+                clearFields()
+            }
+
+        }
+    }
+    fun addQuestion() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val q = Question(
+                qcm = qcmInt.value,
+                texte = questionField.value,
+                rep = repField.value,
+                statut = statutInt.value,
+                nextDate = "",
+                idSujet = subjectID.value
+            )
+            val res = async {
+                dao.insertQuestion(q)
+            }
+
+            error.value = (res.await() == -1L)
+
+            if (error.value) {
+            } else {
                 questionID.value = q.idQuestion
             }
 
         }
     }
+
 
     fun deleteQuestion() {
         for (question in selectedQuestion.toList()) {
