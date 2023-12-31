@@ -34,22 +34,23 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     var subjectID = mutableStateOf(0)
 
     var choiceText = mutableStateOf("")
-    var rightChoice = mutableStateOf(0)
-
+    var rightChoices = mutableStateListOf<Choix>()
+    var choiceList = mutableStateListOf<Choix>()
 
     var error = mutableStateOf(false)
     var selectedQuestion = mutableStateListOf<Question>()
     var idsujet = mutableStateOf(2)
     var sujetsFlow = dao.loadSujet()
     var questionFlow = dao.loadQuestion(idsujet.value)
-    var questionID = mutableStateOf(0)
+    var questionID = mutableStateOf(1)
 
+    var questionList = mutableStateListOf<Question>()
 
     fun addChoiceText(text : String){
         choiceText.value = text
     }
     fun addRightChoice(rightAnswer : Int){
-        rightChoice.value = rightAnswer
+        //rightChoice.value = rightAnswer
 
     }
     fun addAnswer(answer : String){
@@ -75,12 +76,38 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         selectedQuestion.remove(question)
     }
 
-    fun createQuestionChoice(idQuestion: Int){
+    fun addToChoiceList(choice : Choix){
+        choiceList.add(choice)
+    }
+
+    fun removeFromChoiceList(choice : Choix){
+        choiceList.remove(choice)
+    }
+
+    fun fillDBwithChoiceList() {
+        var r = viewModelScope.launch {
+            val listchoix = choiceList.toList()
+            for (choice in listchoix) {
+                try {
+                    val res = async {dao.insertChoix(choice)}
+                    error.value = (res.await()== -1L)
+
+                    if(!error.value){
+                        choiceList.remove(choice)
+                    }
+                } catch (e: SQLiteConstraintException) {
+                    println("Erreur avec la base de donnée : fillDBwithChoiceList")
+                }
+            }
+        }
+
+    }
+    fun createQuestionChoice(idQuestion: Int,rightChoice : Boolean){
         viewModelScope.launch(Dispatchers.IO){
             try {
                 val res = dao.insertChoix(Choix(
                     texte = choiceText.value,
-                    bon = rightChoice.value,
+                    bon = rightChoice,
                     idQuestion = idQuestion))
             } catch (e: SQLiteConstraintException){
 
@@ -102,55 +129,47 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         nextDate.value = question.nextDate
 
      }
-    fun updateQuestionDB(idQuestion: Int) {
+
+    fun addQuestion(q : Question) {
+        println(" idQuestion : " + q.idQuestion  )
+
         viewModelScope.launch(Dispatchers.IO) {
-            val q = Question(
-                idQuestion = idQuestion,
-                qcm = qcmInt.value,
-                texte = questionField.value,
-                rep = repField.value,
-                statut = statutInt.value,
-                nextDate = "",
-                idSujet = subjectID.value
-            )
-            val res = async {
-                dao.insertQuestion(q)
+
+            try {
+                val res = async {
+                    dao.insertQuestion(q)
+                }
+                println(" res : " + res  )
+                val result = res.await()
+                error.value = (result == -1L)
+
+                if (error.value) {
+                    questionID.value = -1
+                } else {
+                    questionID.value = result.toInt()
+                }
+
+
+            } catch (e: SQLiteConstraintException) {
+
+                println("Erreur !")
+
             }
 
-            error.value = (res.await() == -1L)
-
-            if (error.value) {
-            } else {
-                clearFields()
-            }
-
-        }
-    }
-    fun addQuestion() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val q = Question(
-                qcm = qcmInt.value,
-                texte = questionField.value,
-                rep = repField.value,
-                statut = statutInt.value,
-                nextDate = "",
-                idSujet = subjectID.value
-            )
-            val res = async {
-                dao.insertQuestion(q)
-            }
-
-            error.value = (res.await() == -1L)
-
-            if (error.value) {
-            } else {
-                questionID.value = q.idQuestion
-            }
 
         }
     }
 
+    fun deleteSingleQuestion(idQuestion: Int){
+        viewModelScope.launch(Dispatchers.IO){
+            try{
+                dao.deleteQuestion(idQuestion)
+            }catch (e: SQLiteConstraintException){
 
+            }
+        }
+
+    }
     fun deleteQuestion() {
         for (question in selectedQuestion.toList()) {
             try {
@@ -165,7 +184,7 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         }
     }
 
-    fun reloadQuestions() : Flow<List<Question>> {
+    fun reloadQuestions()  {
         try {
             viewModelScope.launch(Dispatchers.IO) {
                 questionFlow = dao.loadQuestion(idsujet.value)
@@ -174,7 +193,6 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         } catch (e: SQLiteConstraintException) {
             println("FAILURE")
         }
-        return questionFlow
     }
 }
 /*

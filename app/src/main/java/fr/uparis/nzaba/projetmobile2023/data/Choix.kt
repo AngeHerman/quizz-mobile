@@ -16,7 +16,7 @@ import androidx.room.PrimaryKey
 class Choix (
     @PrimaryKey(autoGenerate = true) val idChoix : Int = 0,
     val texte: String,
-    val bon: Int,
+    val bon: Boolean,
     val idQuestion: Int
 )
 

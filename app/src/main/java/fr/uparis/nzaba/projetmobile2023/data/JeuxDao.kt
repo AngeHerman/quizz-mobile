@@ -41,7 +41,8 @@ interface JeuxDao {
 
     @Query("SELECT * FROM Question WHERE idSujet = :idSujet")
     fun loadQuestion(idSujet: Int): Flow<List<Question>>
-
+    @Query("DELETE FROM Question WHERE idQuestion = :idQuestion")
+    suspend fun deleteQuestion(idQuestion: Int)
     @Delete
     suspend fun deleteSelectedQuestion(question: Question)
 
