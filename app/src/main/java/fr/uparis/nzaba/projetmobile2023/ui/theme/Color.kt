@@ -2,6 +2,8 @@ package fr.uparis.nzaba.projetmobile2023.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val PastelBlack = Color(0xFF191A19)
+val PastelGreen = Color(0xFFC3E2C2)
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)

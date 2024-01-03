@@ -67,6 +67,8 @@ import fr.uparis.nzaba.projetmobile2023.data.Question
 import fr.uparis.nzaba.projetmobile2023.data.Sujet
 import fr.uparis.nzaba.projetmobile2023.model.GererQuestionViewModel
 import fr.uparis.nzaba.projetmobile2023.ui.theme.Projetmobile2023Theme
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 class GererQuestionsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -674,8 +676,8 @@ class GererQuestionsActivity : ComponentActivity() {
                 qcm = qcm,
                 texte = questionText,
                 rep = answer,
-                statut = 0,
-                nextDate = "",
+                statut = 1,
+                nextDate = SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().time),
                 idSujet = selectedSubject.idSujet
             )
             AddQuestion(
@@ -698,8 +700,8 @@ class GererQuestionsActivity : ComponentActivity() {
                 qcm = qcm,
                 texte = questionText,
                 rep = answer,
-                statut = 0,
-                nextDate = "",
+                statut = 1,
+                nextDate =SimpleDateFormat("dd/MM/yyyy").format(Calendar.getInstance().time),
                 idSujet = selectedSubject2.idSujet
             )
             AddQuestion(
@@ -885,5 +887,48 @@ class GererQuestionsActivity : ComponentActivity() {
             icon = icon
         )
 
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun SubjectsDropDownMenu(
+    subjectList: List<Sujet>,
+    selectedSubject: Sujet,
+    alignement: Alignment,
+    changeSelectedSubject: (Sujet) -> Unit
+) {
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Spacer(Modifier.height(5.dp))
+    Box(
+        Modifier.fillMaxWidth(),
+        contentAlignment = alignement
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded, onExpandedChange = { expanded = it },
+        ) {
+            TextField(
+                value = selectedSubject.libelleSujet,
+                onValueChange = {},
+                readOnly = true
+            )
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                subjectList.forEach() {
+                    SubjectDropDownItem(selectedOption = {
+                        expanded = false;
+                        changeSelectedSubject(it);
+                    }, text = it.libelleSujet)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SubjectDropDownItem(selectedOption: () -> Unit, text: String) {
+    DropdownMenuItem(onClick = selectedOption) {
+        Text(text)
     }
 }

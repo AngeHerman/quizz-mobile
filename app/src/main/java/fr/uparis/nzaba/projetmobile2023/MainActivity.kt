@@ -57,9 +57,12 @@ fun Greeting(model: MainViewModel = viewModel()) {
     val sujets by model.sujetsFlow.collectAsState(listOf())
     val context = LocalContext.current
     Column {
-        Text(
-            text = "Hello World!",
-        )
+        Button(onClick = {
+            val iii = Intent(context, MemorisationActivity::class.java)
+            context.startActivity(iii)
+        }) {
+            Text("Jouer")
+        }
         Button(onClick = {
             model.addSujet()
         }) {

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.widget.Toast
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +22,9 @@ import fr.uparis.nzaba.projetmobile2023.data.Question
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class GererQuestionViewModel (private val application: Application) : AndroidViewModel(application) {
 
@@ -44,7 +48,7 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     var questionFlow = dao.loadQuestion(idsujet.value)
     var questionID = mutableStateOf(1)
 
-    var questionList = mutableStateListOf<Question>()
+    var questionList = mutableListOf<Question>()
 
     fun addChoiceText(text : String){
         choiceText.value = text
@@ -59,6 +63,17 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
 
     fun addQuestionText(question : String){
         questionField.value = question
+    }
+    @Composable
+    fun setQuestionList(){
+        questionList = questionFlow.collectAsState(listOf()).value.filter {
+            val day =
+                SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).parse(it.nextDate)
+            val today = Calendar.getInstance().time
+            println("Boolean :" + (day <= today))
+            day <= today
+        }.shuffled().toMutableList()
+
     }
 
     fun updateSubjectID(updated : Int){
@@ -122,13 +137,6 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         nextDate.value = ""
         subjectID.value = 0
     }
-    fun fillQuestionForUpdate(question: Question){
-        subjectID.value = question.idSujet
-        qcmInt.value = question.qcm
-        statutInt.value = question.statut
-        nextDate.value = question.nextDate
-
-     }
 
     fun addQuestion(q : Question) {
         println(" idQuestion : " + q.idQuestion  )
