@@ -141,7 +141,11 @@ fun ComposableQuestionPortrait(model: AndroidViewModel, onMenuIconClick: () -> U
 @Composable
 fun ComposableQuestionLandscape(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
     //EcranGererQuestionsLandscape(model = model as GererQuestionViewModel, onMenuIconClick = onMenuIconClick)
-    EcranGererQuestionsPortrait(model = model as GererQuestionViewModel, onMenuIconClick = onMenuIconClick)
+    EcranGererQuestionsPortrait(
+        model = model as GererQuestionViewModel,
+        onMenuIconClick = onMenuIconClick
+    )
+}
 
 
     @SuppressLint("UnrememberedMutableState")
@@ -481,17 +485,6 @@ fun ComposableQuestionLandscape(model: AndroidViewModel, onMenuIconClick: () -> 
         }
     }
 
-    fun addtoAnswerList(
-        choiceList : MutableList<Choix>,
-        c : Choix
-        ){
-        choiceList.find { it.idChoix == c.idChoix }.apply {
-            if(this != null) choiceList.remove(this)
-        }
-        choiceList.add(c)
-    }
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : String){
@@ -600,7 +593,7 @@ fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : Strin
 
         Scaffold(
             topBar = {
-                TopBar()
+                TopBarOther("Gérer les questions", onMenuIconClick)
             },
             bottomBar = {
                 MyBotBar(
@@ -948,40 +941,6 @@ fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : Strin
         )
 
     }
-}
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun SubjectsDropDownMenu(
-    subjectList: List<Sujet>,
-    selectedSubject: Sujet,
-    alignement: Alignment,
-    changeSelectedSubject: (Sujet) -> Unit
-) {
 
-    var expanded by remember { mutableStateOf(false) }
-
-    Spacer(Modifier.height(5.dp))
-    Box(
-        Modifier.fillMaxWidth(),
-        contentAlignment = alignement
-    ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded, onExpandedChange = { expanded = it },
-        ) {
-            TextField(
-                value = selectedSubject.libelleSujet,
-                onValueChange = {},
-                readOnly = true
-            )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                subjectList.forEach() {
-                    SubjectDropDownItem(selectedOption = {
-                        expanded = false;changeSelectedSubject(it);
-                    }, text = it.libelleSujet)
-                }
-            }
-        }
-    }
-}
 

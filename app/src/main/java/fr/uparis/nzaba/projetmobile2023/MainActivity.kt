@@ -1,5 +1,6 @@
 package fr.uparis.nzaba.projetmobile2023
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
@@ -31,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -74,13 +77,16 @@ fun ComposableMain(model: AndroidViewModel, onMenuIconClick: () -> Unit) {
     EcranMain(model = model as MainViewModel, onMenuIconClick = onMenuIconClick)
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun EcranMain(model: MainViewModel = viewModel(),onMenuIconClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(topBar = { TopBarMain("Jeu", onMenuIconClick) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
-        Row(horizontalArrangement = Arrangement.SpaceBetween){
-            MesBouttons(paddingV,model::addSujet)
+        snackbarHost = { SnackbarHost(snackbarHostState) }) {
+        Column {
+            Spacer(Modifier.padding(50.dp))
+            ScaffoldMemorisation()
+
         }
     }
 
