@@ -84,12 +84,14 @@ fun EcranTelQuestion(model: TelechargerQuestionViewModel = viewModel(), onMenuIc
     val snackbarHostState = remember { SnackbarHostState() }
     val sujets by model.sujetsFlow.collectAsState(listOf())
     var value by model.value
+    var textSujet by model.textsujet
     Scaffold(topBar = { TopBarOther("Telecharger Question", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
         Column(verticalArrangement = Arrangement.SpaceBetween){
             Telechargement(
                 padding = paddingV,
                 value = value,
+                 textSujet = textSujet,
                 onValueChange = model::onValueChange,
                 onclick = model::onClick,
                 sujets = sujets,
@@ -103,10 +105,11 @@ fun EcranTelQuestion(model: TelechargerQuestionViewModel = viewModel(), onMenuIc
 fun Telechargement(
     padding: PaddingValues,
     value: String,
+    textSujet: String,
     onValueChange: (String) -> Unit,
     onclick: () -> Unit,
     sujets: List<Sujet>,
-    onSelect: (Int) -> Unit
+    onSelect: (Sujet) -> Unit
 ){
     var expanded by remember { mutableStateOf(false) }
     Column (
@@ -129,7 +132,10 @@ fun Telechargement(
                 //.border(1.dp, Color.Black, shape = MaterialTheme.shapes.medium)
                 //.shadow(4.dp, shape = MaterialTheme.shapes.medium)
         ) {
-            Text(text = "Sélectionnez un sujet",fontSize = 20.sp)
+            Text(
+                text = if (textSujet.isEmpty()) "Sélectionnez un sujet" else textSujet,
+                fontSize = 20.sp
+            )
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
@@ -138,7 +144,7 @@ fun Telechargement(
                     DropdownMenuItem(
                         text = {Text(text = sujet.libelleSujet)},
                         onClick = {
-                            onSelect(sujet.idSujet)
+                            onSelect(sujet)
                             expanded = false
                         }
                     )
