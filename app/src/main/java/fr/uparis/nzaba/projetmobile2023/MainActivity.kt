@@ -83,8 +83,9 @@ fun EcranMain(model: MainViewModel = viewModel(),onMenuIconClick: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(topBar = { TopBarMain("Jeu", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingV ->
-        Column(verticalArrangement = Arrangement.SpaceBetween){
-            MesBouttons(paddingV,model::addSujet)
+        Column(modifier = Modifier.padding(paddingV),verticalArrangement = Arrangement.SpaceBetween){
+            Spacer(Modifier.padding(20.dp))
+            ScaffoldMemorisation()
         }
     }
 
