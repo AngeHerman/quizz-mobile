@@ -104,6 +104,8 @@ fun EcranQuestion(size: WindowSizeClass, model: GererQuestionViewModel = viewMod
     }
 }
 
+
+
 @SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,6 +119,8 @@ fun PageQuestionPortrait(model: GererQuestionViewModel = viewModel()){
         customComposable = { model, onMenuIconClick -> ComposableQuestionPortrait(model, onMenuIconClick) }
     )
 }
+
+
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -148,415 +152,7 @@ fun ComposableQuestionLandscape(model: AndroidViewModel, onMenuIconClick: () -> 
     )
 }
 
-
 @SuppressLint("UnrememberedMutableState")
-@Composable
-fun UneQuestion(
-    question: Question,
-    navController: NavHostController,
-    selectedQuestions: List<Question>,
-    addMethod: (Question) -> Unit,
-    deleteFromList: (Question) -> Unit,
-    navigateToEditPage: (Question) -> Unit
-
-) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 6.dp
-        )
-
-    ) {
-        QuestionContent(
-            question,
-            navController,
-            selectedQuestions,
-            addMethod,
-            deleteFromList,
-            navigateToEditPage
-        )
-
-    }
-}
-
-@Composable
-fun QuestionContent(
-    question: Question,
-    navController: NavHostController,
-    selectedQuestions: List<Question>,
-    addMethod: (Question) -> Unit,
-    deleteFromList: (Question) -> Unit,
-    navigateToEditPage: (Question) -> Unit
-) {
-
-    Column {
-        Row {
-            Text(text = "Question : \n ${question.texte}",modifier = Modifier.padding(5.dp),textAlign = TextAlign.Start)
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-
-                    Row {
-                        QuestionButton(
-                            { navigateToEditPage(question) },
-                            Modifier.padding(5.dp),
-                            Icons.Default.Edit,
-                            ""
-                        )
-                        Spacer(Modifier.width(5.dp))
-                        SelectElementCheckBox(
-                            question,
-                            selectedQuestions,
-                            addMethod,
-                            deleteFromList
-                        )
-                    }
-            }
-        }
-        Spacer(Modifier.padding(5.dp))
-        Row {
-            if(question.qcm == 0) DisplayText(text1= "Réponse :",text2 = question.rep)
-            DisplayText(text1 = "Statut :", text2 = question.statut.toString() )
-            DisplayText(text1 = "Prochaine date :", text2 =question.nextDate)
-
-        }
-
-
-    }
-
-}
-
-
-
-@Composable
-fun DisplayText(text1: String,text2 : String) {
-        Text("$text1\n$text2",Modifier.padding(5.dp),textAlign = TextAlign.Start)
-}
-
-
-    @Composable
-fun <T : Any> SelectElementCheckBox(
-    element: T,
-    selectedElements: List<T>,
-    addMethod: (T) -> Unit,
-    deleteFromList: (T) -> Unit
-) {
-    Checkbox(
-        checked = selectedElements.contains(element),
-        onCheckedChange = {
-            addElementToSelectedList(
-                it,
-                element,
-                addMethod,
-                deleteFromList
-            )
-        });
-
-}
-fun <T : Any> addElementToSelectedList(
-    addToSelection: Boolean,
-    element: T,
-    addMethod: (T) -> Unit,
-    deleteFromList: (T) -> Unit
-) {
-    if (addToSelection) {
-        addMethod(element)
-    } else {
-        deleteFromList(element)
-    }
-}
-
-
-@Composable
-fun QuestionButton(
-    methodForButton: () -> Unit,
-    modifier: Modifier,
-    img: ImageVector,
-    str: String
-) {
-    Button(
-        onClick = methodForButton,
-        modifier = modifier
-    ) {
-        Text(str)
-        Icon(img, "icon")
-    }
-}
-
-
-@Composable
-fun ListeQuestions(
-    questions: List<Question>,
-    navController: NavHostController,
-    selectedQuestions: List<Question>,
-    addMethod: (Question) -> Unit,
-    deleteFromList: (Question) -> Unit,
-    navigateToEditPage: (Question) -> Unit
-) {
-
-    LazyColumn(
-        Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(1f)
-    ) {
-        itemsIndexed(questions) {
-            //index,item -> Text(item.texte)
-                index, item ->
-                UneQuestion(
-                    question = item,
-                    navController,
-                    selectedQuestions,
-                    addMethod,
-                    deleteFromList,
-                    navigateToEditPage
-                )
-
-
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
-@Composable
-fun SubjectsDropDownMenu(
-    subjectList: List<Sujet>,
-    selectedSubject: Sujet,
-    alignement: Alignment,
-    changeSelectedSubject: (Sujet) -> Unit
-) {
-
-    var expanded by remember { mutableStateOf(false) }
-
-    Spacer(Modifier.height(5.dp))
-    Box(
-        Modifier.fillMaxWidth(),
-        contentAlignment = alignement
-    ) {
-        ExposedDropdownMenuBox(
-            expanded = expanded, onExpandedChange = { expanded = it },
-        ) {
-            TextField(
-                value = selectedSubject.libelleSujet,
-                onValueChange = {},
-                readOnly = true
-            )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                subjectList.forEach() {
-                    SubjectDropDownItem(selectedOption = {
-                        expanded = false;
-                        changeSelectedSubject(it);
-                    }, text = it.libelleSujet)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SubjectDropDownItem(selectedOption: () -> Unit, text: String) {
-    DropdownMenuItem(onClick = selectedOption) {
-        Text(text)
-    }
-}
-
-@Composable
-fun SubjectDropDownMenuForCreation(
-    subjectList: List<Sujet>,
-    selectedSubject: Sujet,
-    changeSelectedSubject: (Sujet) -> Unit
-) {
-    Spacer(modifier = Modifier.height(2.dp))
-    Text(text = "Sujet : ", Modifier.padding(horizontal = 10.dp))
-    Box(
-        Modifier
-            .padding(horizontal = 10.dp)
-            .fillMaxWidth()
-    ) {
-        SubjectsDropDownMenu(
-            subjectList = subjectList,
-            selectedSubject = selectedSubject,
-            changeSelectedSubject = changeSelectedSubject,
-            alignement = Alignment.TopStart
-        )
-    }
-}
-
-@Composable
-fun EditingPage(
-    qID : Int,
-    qcm : Int,
-    editQuestionText: (String) -> Unit,
-    question: String,
-    answer: String,
-    editAnswer: (String) -> Unit,
-    editQuestionFromDB: (Int) -> Unit
-) {
-    println("QUESTION IDDD : $qID")
-    LazyColumn {
-        item {
-            TextfieldQuestion(text = "Question : ", addToString = editQuestionText, question)
-            Spacer(modifier = Modifier.height(5.dp))
-            if(qcm == 0) {
-                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
-                Spacer(modifier = Modifier.height(5.dp))
-            }
-            QuestionButton(
-                { editQuestionFromDB(qID) },
-                Modifier.padding(16.dp),
-                Icons.Default.Edit,
-                "Modifier la question"
-            )
-        }
-    }
-
-}
-
-@Composable
-fun AddQuestionButton(addQuestiontoDB: () -> Unit, addString: String) {
-    Button(
-        onClick = addQuestiontoDB,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(addString)
-    }
-}
-
-@SuppressLint("UnrememberedMutableState")
-@Composable
-fun CreationPage(
-    subjectList: List<Sujet>,
-    selectedSubject: Sujet,
-    answer: String,
-    editAnswer: (String) -> Unit,
-    question: String,
-    editQuestionText: (String) -> Unit,
-    addQuestiontoDB: () -> Unit,
-    goToChoiceCreationPage: () -> Unit,
-    changeSelectedSubject: (Sujet) -> Unit
-) {
-
-    var display by remember { mutableStateOf(false) }
-
-    LazyColumn {
-        item(1) {
-            SubjectDropDownMenuForCreation(subjectList, selectedSubject, changeSelectedSubject)
-            TextfieldQuestion(text = "Question : ", addToString = editQuestionText, question)
-            CheckBoxQCM(display = display, changeDisplay = { display = !display })
-        }
-
-        if (!display) {
-            item(2) {
-                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
-                Spacer(modifier = Modifier.height(5.dp))
-                AddQuestionButton(addQuestiontoDB, "Ajouter Question")
-            }
-        } else {
-            item(3) {
-                Spacer(modifier = Modifier.height(5.dp))
-
-                QuestionButton(
-                    methodForButton = goToChoiceCreationPage,
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .fillMaxWidth(),
-                    img = Icons.Default.Add, str = "Ajouter reponses"
-                )
-            }
-        }
-    }
-}
-
-
-
-@Composable
-fun CheckBoxQCM(display: Boolean, changeDisplay: ((Boolean) -> Unit)?) {
-    Row(Modifier.padding(10.dp)) {
-        Text("QCM : ")
-        Spacer(modifier = Modifier.width(5.dp))
-        Checkbox(checked = display, onCheckedChange = changeDisplay)
-    }
-}
-
-@Composable
-fun CheckBoxAnswerQCM(rightAnswer: Boolean, changeRightAnswer: ((Boolean) -> Unit)?) {
-    Row(Modifier.padding(10.dp)) {
-        Spacer(modifier = Modifier.width(5.dp))
-        Checkbox(checked = rightAnswer, onCheckedChange = changeRightAnswer)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : String){
-    Spacer(modifier = Modifier.height(5.dp))
-    Box(
-        Modifier
-            .padding(10.dp)){
-
-        Column {
-            Text(text)
-            Spacer(Modifier.width(5.dp))
-            TextField(value = value, onValueChange = addToString)
-        }
-    }
-}
-
-
-@Composable
-fun CreateChoicePage(
-    createChoiceLeave: () -> Unit,
-    createChoiceContinue: () -> Unit,
-    editAnswer: (String) -> Unit,
-    answer: String,
-    rightAnswer: Boolean,
-    changeRightAnswer: ((Boolean) -> Unit)?
-) {
-    Column {
-        Box {
-            Text("Question", Modifier.padding(5.dp))
-        }
-        Spacer(Modifier.height(5.dp))
-        Row {
-            Box {
-                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
-            }
-            Spacer(modifier = Modifier.height(5.dp))
-
-        }
-        Row {
-            Text("Bonne réponse ?", Modifier.padding(5.dp), textAlign = TextAlign.Start)
-            Box {
-                CheckBoxAnswerQCM(
-                    rightAnswer = rightAnswer,
-                    changeRightAnswer = changeRightAnswer
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(5.dp))
-        Row {
-            QuestionButton(
-                methodForButton = createChoiceLeave,
-                modifier = Modifier.padding(1.dp),
-                img = Icons.Default.Done,
-                str = "Finir d'ajouter des réponses"
-            )
-            QuestionButton(
-                methodForButton = createChoiceContinue,
-                modifier = Modifier.padding(1.dp),
-                img = Icons.Default.Add,
-                str = "Ajouter réponse et continuer"
-            )
-        }
-
-    }
-
-}
-
-@SuppressLint("UnrememberedMutableState")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EcranGererQuestionsPortrait(model: GererQuestionViewModel = viewModel(),onMenuIconClick: () -> Unit){
     val navController = rememberNavController()
@@ -787,6 +383,415 @@ fun EcranGererQuestionsPortrait(model: GererQuestionViewModel = viewModel(),onMe
         }
     }
 }
+
+
+@SuppressLint("UnrememberedMutableState")
+@Composable
+fun UneQuestion(
+    question: Question,
+    navController: NavHostController,
+    selectedQuestions: List<Question>,
+    addMethod: (Question) -> Unit,
+    deleteFromList: (Question) -> Unit,
+    navigateToEditPage: (Question) -> Unit
+
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        )
+
+    ) {
+        QuestionContent(
+            question,
+            navController,
+            selectedQuestions,
+            addMethod,
+            deleteFromList,
+            navigateToEditPage
+        )
+
+    }
+}
+
+@Composable
+fun QuestionContent(
+    question: Question,
+    navController: NavHostController,
+    selectedQuestions: List<Question>,
+    addMethod: (Question) -> Unit,
+    deleteFromList: (Question) -> Unit,
+    navigateToEditPage: (Question) -> Unit
+) {
+
+    Column {
+        Row {
+            Text(text = "Question : \n ${question.texte}",modifier = Modifier.padding(5.dp),textAlign = TextAlign.Start)
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+
+                    Row {
+                        QuestionButton(
+                            { navigateToEditPage(question) },
+                            Modifier.padding(5.dp),
+                            Icons.Default.Edit,
+                            ""
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        SelectElementCheckBox(
+                            question,
+                            selectedQuestions,
+                            addMethod,
+                            deleteFromList
+                        )
+                    }
+            }
+        }
+        Spacer(Modifier.padding(5.dp))
+        Row {
+            if(question.qcm == 0) DisplayText(text1= "Réponse :",text2 = question.rep)
+            DisplayText(text1 = "Statut :", text2 = question.statut.toString() )
+            DisplayText(text1 = "Prochaine date :", text2 =question.nextDate)
+
+        }
+
+
+    }
+
+}
+
+
+
+@Composable
+fun DisplayText(text1: String,text2 : String) {
+        Text("$text1\n$text2",Modifier.padding(5.dp),textAlign = TextAlign.Start)
+}
+
+
+@Composable
+fun <T : Any> SelectElementCheckBox(
+    element: T,
+    selectedElements: List<T>,
+    addMethod: (T) -> Unit,
+    deleteFromList: (T) -> Unit
+) {
+    Checkbox(
+        checked = selectedElements.contains(element),
+        onCheckedChange = {
+            addElementToSelectedList(
+                it,
+                element,
+                addMethod,
+                deleteFromList
+            )
+        });
+
+}
+fun <T : Any> addElementToSelectedList(
+    addToSelection: Boolean,
+    element: T,
+    addMethod: (T) -> Unit,
+    deleteFromList: (T) -> Unit
+) {
+    if (addToSelection) {
+        addMethod(element)
+    } else {
+        deleteFromList(element)
+    }
+}
+
+
+@Composable
+fun QuestionButton(
+    methodForButton: () -> Unit,
+    modifier: Modifier,
+    img: ImageVector,
+    str: String
+) {
+    Button(
+        onClick = methodForButton,
+        modifier = modifier
+    ) {
+        Text(str)
+        Icon(img, "icon")
+    }
+}
+
+
+@Composable
+fun ListeQuestions(
+    questions: List<Question>,
+    navController: NavHostController,
+    selectedQuestions: List<Question>,
+    addMethod: (Question) -> Unit,
+    deleteFromList: (Question) -> Unit,
+    navigateToEditPage: (Question) -> Unit
+) {
+
+    LazyColumn(
+        Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(1f)
+    ) {
+        itemsIndexed(questions) {
+            //index,item -> Text(item.texte)
+                index, item ->
+                UneQuestion(
+                    question = item,
+                    navController,
+                    selectedQuestions,
+                    addMethod,
+                    deleteFromList,
+                    navigateToEditPage
+                )
+
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun SubjectsDropDownMenu(
+    subjectList: List<Sujet>,
+    selectedSubject: Sujet,
+    alignement: Alignment,
+    changeSelectedSubject: (Sujet) -> Unit
+) {
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Spacer(Modifier.height(5.dp))
+    Box(
+        Modifier.fillMaxWidth(),
+        contentAlignment = alignement
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded, onExpandedChange = { expanded = it },
+        ) {
+            TextField(
+                value = selectedSubject.libelleSujet,
+                onValueChange = {},
+                readOnly = true
+            )
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                subjectList.forEach() {
+                    SubjectDropDownItem(selectedOption = {
+                        expanded = false;
+                        changeSelectedSubject(it);
+                    }, text = it.libelleSujet)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SubjectDropDownItem(selectedOption: () -> Unit, text: String) {
+    DropdownMenuItem(onClick = selectedOption) {
+        Text(text)
+    }
+}
+
+@Composable
+fun SubjectDropDownMenuForCreation(
+    subjectList: List<Sujet>,
+    selectedSubject: Sujet,
+    changeSelectedSubject: (Sujet) -> Unit
+) {
+    Spacer(modifier = Modifier.height(2.dp))
+    Text(text = "Sujet : ", Modifier.padding(horizontal = 10.dp))
+    Box(
+        Modifier
+            .padding(horizontal = 10.dp)
+            .fillMaxWidth()
+    ) {
+        SubjectsDropDownMenu(
+            subjectList = subjectList,
+            selectedSubject = selectedSubject,
+            changeSelectedSubject = changeSelectedSubject,
+            alignement = Alignment.TopStart
+        )
+    }
+}
+@Composable
+fun AddQuestionButton(addQuestiontoDB: () -> Unit, addString: String) {
+    Button(
+        onClick = addQuestiontoDB,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(addString)
+    }
+}
+@Composable
+fun EditingPage(
+    qID : Int,
+    qcm : Int,
+    editQuestionText: (String) -> Unit,
+    question: String,
+    answer: String,
+    editAnswer: (String) -> Unit,
+    editQuestionFromDB: (Int) -> Unit
+) {
+    println("QUESTION IDDD : $qID")
+    LazyColumn {
+        item {
+            TextfieldQuestion(text = "Question : ", addToString = editQuestionText, question)
+            Spacer(modifier = Modifier.height(5.dp))
+            if(qcm == 0) {
+                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
+                Spacer(modifier = Modifier.height(5.dp))
+            }
+            QuestionButton(
+                { editQuestionFromDB(qID) },
+                Modifier.padding(16.dp),
+                Icons.Default.Edit,
+                "Modifier la question"
+            )
+        }
+    }
+
+}
+
+
+
+@SuppressLint("UnrememberedMutableState")
+@Composable
+fun CreationPage(
+    subjectList: List<Sujet>,
+    selectedSubject: Sujet,
+    answer: String,
+    editAnswer: (String) -> Unit,
+    question: String,
+    editQuestionText: (String) -> Unit,
+    addQuestiontoDB: () -> Unit,
+    goToChoiceCreationPage: () -> Unit,
+    changeSelectedSubject: (Sujet) -> Unit
+) {
+
+    var display by remember { mutableStateOf(false) }
+
+    LazyColumn {
+        item(1) {
+            SubjectDropDownMenuForCreation(subjectList, selectedSubject, changeSelectedSubject)
+            TextfieldQuestion(text = "Question : ", addToString = editQuestionText, question)
+            CheckBoxQCM(display = display, changeDisplay = { display = !display })
+        }
+
+        if (!display) {
+            item(2) {
+                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
+                Spacer(modifier = Modifier.height(5.dp))
+                AddQuestionButton(addQuestiontoDB, "Ajouter Question")
+            }
+        } else {
+            item(3) {
+                Spacer(modifier = Modifier.height(5.dp))
+
+                QuestionButton(
+                    methodForButton = goToChoiceCreationPage,
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .fillMaxWidth(),
+                    img = Icons.Default.Add, str = "Ajouter reponses"
+                )
+            }
+        }
+    }
+}
+
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TextfieldQuestion(text : String, addToString: (String) -> Unit,value : String){
+    Spacer(modifier = Modifier.height(5.dp))
+    Box(
+        Modifier
+            .padding(10.dp)){
+
+        Column {
+            Text(text)
+            Spacer(Modifier.width(5.dp))
+            TextField(value = value, onValueChange = addToString)
+        }
+    }
+}
+
+@Composable
+fun CheckBoxQCM(display: Boolean, changeDisplay: ((Boolean) -> Unit)?) {
+    Row(Modifier.padding(10.dp)) {
+        Text("QCM : ")
+        Spacer(modifier = Modifier.width(5.dp))
+        Checkbox(checked = display, onCheckedChange = changeDisplay)
+    }
+}
+
+@Composable
+fun CheckBoxAnswerQCM(rightAnswer: Boolean, changeRightAnswer: ((Boolean) -> Unit)?) {
+    Row(Modifier.padding(10.dp)) {
+        Spacer(modifier = Modifier.width(5.dp))
+        Checkbox(checked = rightAnswer, onCheckedChange = changeRightAnswer)
+    }
+}
+@Composable
+fun CreateChoicePage(
+    createChoiceLeave: () -> Unit,
+    createChoiceContinue: () -> Unit,
+    editAnswer: (String) -> Unit,
+    answer: String,
+    rightAnswer: Boolean,
+    changeRightAnswer: ((Boolean) -> Unit)?
+) {
+    Column {
+        Box {
+            Text("Question", Modifier.padding(5.dp))
+        }
+        Spacer(Modifier.height(5.dp))
+        Row {
+            Box {
+                TextfieldQuestion(text = "Réponse : ", addToString = editAnswer, answer)
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+
+        }
+        Row {
+            Text("Bonne réponse ?", Modifier.padding(5.dp), textAlign = TextAlign.Start)
+            Box {
+                CheckBoxAnswerQCM(
+                    rightAnswer = rightAnswer,
+                    changeRightAnswer = changeRightAnswer
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(5.dp))
+        Row {
+            QuestionButton(
+                methodForButton = createChoiceLeave,
+                modifier = Modifier.padding(1.dp),
+                img = Icons.Default.Done,
+                str = "Finir d'ajouter des réponses"
+            )
+            QuestionButton(
+                methodForButton = createChoiceContinue,
+                modifier = Modifier.padding(1.dp),
+                img = Icons.Default.Add,
+                str = "Ajouter réponse et continuer"
+            )
+        }
+
+    }
+
+}
+
+
 
 @Composable
 fun DeleteQuestion(model : GererQuestionViewModel,

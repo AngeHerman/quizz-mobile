@@ -206,7 +206,6 @@ fun QuestionDisplay(question: Question,
                     textAlign = TextAlign.Center
                 )
             }
-
         }
         item{
             Spacer(modifier = Modifier.padding(10.dp))
@@ -216,7 +215,6 @@ fun QuestionDisplay(question: Question,
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(1.dp),
                 border = BorderStroke(1.dp, Color.Black)
-
             ) {
                 Text(
                     question.texte,
@@ -277,26 +275,23 @@ fun BasicCountdownTimer(passQuestion: () -> Unit,
 @Composable
 fun PageStatistique(correctAnswers : Int,
                     questionsNumber : Int){
-    Column(Modifier.padding(10.dp)) {
+    Column(Modifier.padding(10.dp).fillMaxWidth(),Arrangement.Center,Alignment.CenterHorizontally) {
         Text("Resultat ", modifier = Modifier.padding(15.dp))
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(verticalArrangement = Arrangement.Center,horizontalAlignment = Alignment.Start) {
             Text("Nombres de bonnes réponses !")
             Row {
                 Text("$correctAnswers/$questionsNumber", modifier = Modifier.padding(10.dp))
             }
-        }
-
-        Row{
-            //Text("Temps de réponse moyen : $avgTime",modifier = Modifier.padding(10.dp))
         }
     }
 }
 
 @Composable
 fun BlankPage(){
-    Column(horizontalAlignment = Alignment.CenterHorizontally){
+    Column(modifier = Modifier.fillMaxWidth(),verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally){
         Text("Veuillez repasser dans quelques jours\n pour vous entrainer",Modifier.padding(15.dp))
         Text("Ou ajouter d'autres questions !",Modifier.padding(15.dp))
+
     }
 }
 
@@ -331,7 +326,6 @@ fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel(),
     var goodAnswers by remember {
         mutableStateOf(0)
     }
-
 
 
     Scaffold(
@@ -396,22 +390,24 @@ fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel(),
                         addMethod = {selectedAnswerList.add(it)},
                         deleteFromList = {selectedAnswerList.remove(it)}
                         )
-                }else if(ind > questions.size - 1){
-                    navController.navigate("stat")
+                }else if(ind > questions.size - 1 && questions.isNotEmpty()){
+                    navController.navigate("stat"){popUpTo("start") }
                 } else{
-                    navController.navigate("noQuestions")
+                    navController.navigate("noQuestions"){popUpTo("start") }
                 }
             }
             composable("stat"){
-                PageStatistique(goodAnswers,model.questionList.size)
-
+                PageStatistique(
+                    goodAnswers,
+                    model.questionList.size
+                )
             }
             composable("noQuestions"){
                 BlankPage()
-                }
             }
         }
-    if(questionRetrieve) model.setQuestionList()
+    }
+    if(questionRetrieve) model.SetQuestionList()
 
     if(nextQuestion){
         if(index <= model.questionList.size - 1) {

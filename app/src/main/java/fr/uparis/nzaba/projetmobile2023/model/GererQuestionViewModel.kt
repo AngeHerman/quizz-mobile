@@ -34,14 +34,8 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
 
     private val dao = (application as JeuxApplication).database.jeuxDao()
 
-    var questionField = mutableStateOf("")
-    var repField = mutableStateOf("")
-    var qcmInt = mutableStateOf(0)
-    var statutInt = mutableStateOf(0)
-    var nextDate = mutableStateOf("")
     var subjectID = mutableStateOf(0)
 
-    var choiceText = mutableStateOf("")
     var choiceList = mutableStateListOf<Choix>()
 
     var error = mutableStateOf(false)
@@ -55,36 +49,8 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     var questionID = mutableStateOf(1)
     var choiceFlow = dao.loadChoixReponse(questionID.value)
 
-
     var questionList = mutableListOf<Question>()
     var answerList = mutableListOf<Choix>()
-
-
-    fun retrieveChoices(idQuestion: Int){
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                choiceFlow =  dao.loadChoixReponse(idQuestion)
-            }catch (e: SQLiteConstraintException){
-                println("Erreur DB !")
-            }
-        }
-    }
-
-    @Composable
-    fun setQuestionList(){
-        questionList = questionFlow.collectAsState(listOf()).value.filter {
-            val day =
-                SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).parse(it.nextDate)
-            val today = Calendar.getInstance().time
-            println("Boolean :" + (day <= today))
-            day <= today
-        }.shuffled().toMutableList()
-
-    }
-
-    fun updateSubjectID(updated : Int){
-        idsujet.value = updated
-    }
 
     fun updateSubjectIDCreation(updated : Int){
         subjectID.value = updated
@@ -100,7 +66,31 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     fun addToChoiceList(choice : Choix){
         choiceList.add(choice)
     }
+    fun retrieveChoices(idQuestion: Int){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                choiceFlow =  dao.loadChoixReponse(idQuestion)
+            }catch (e: SQLiteConstraintException){
+                println("Erreur DB !")
+            }
+        }
+    }
 
+    @Composable
+    fun SetQuestionList(){
+        questionList = questionFlow.collectAsState(listOf()).value.filter {
+            val day =
+                SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).parse(it.nextDate)
+            val today = Calendar.getInstance().time
+            println("Boolean :" + (day <= today))
+            day <= today
+        }.shuffled().toMutableList()
+
+    }
+
+    fun updateSubjectID(updated : Int){
+        idsujet.value = updated
+    }
 
     private fun changeQuestionStatus(question: Question,status : Int){
 
@@ -109,8 +99,7 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
             else -> 1
         }
         val currDate = Calendar.getInstance()
-        //2.0.pow(newStatus - 1.toDouble()).toInt()
-        currDate.add(Calendar.DATE, 0)
+        currDate.add(Calendar.DATE, 2.0.pow(newStatus - 1.toDouble()).toInt())
 
         val date = SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE)
         val newDateStr = date.format(currDate.time)
@@ -120,7 +109,7 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     }
     fun checkAnswer(idQuestion: Int,rep : String): Boolean{
         var bool = false
-        val q = questionList.find {it.idQuestion == idQuestion}?.apply {
+        questionList.find {it.idQuestion == idQuestion}?.apply {
             var status = this.statut
 
             if (this.qcm == 0) {
@@ -162,37 +151,14 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         }
 
     }
-    fun createQuestionChoice(idQuestion: Int,rightChoice : Boolean){
-        viewModelScope.launch(Dispatchers.IO){
-            try {
-                val res = dao.insertChoix(Choix(
-                    texte = choiceText.value,
-                    bon = rightChoice,
-                    idQuestion = idQuestion))
-            } catch (e: SQLiteConstraintException){
-
-            }
-        }
-    }
-    fun clearFields(){
-        questionField.value =""
-        repField.value = ""
-        qcmInt.value = 0
-        statutInt.value = 0
-        nextDate.value = ""
-        subjectID.value = 0
-    }
 
     fun addQuestion(q : Question) {
-        println(" idQuestion : " + q.idQuestion  )
-
         viewModelScope.launch(Dispatchers.IO) {
 
             try {
                 val res = async {
                     dao.insertQuestion(q)
                 }
-                println(" res : " + res  )
                 val result = res.await()
                 error.value = (result == -1L)
 
@@ -205,7 +171,7 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
 
             } catch (e: SQLiteConstraintException) {
 
-                println("Erreur !")
+                println("Erreur ajout de question!")
 
             }
 
@@ -229,10 +195,9 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
                 viewModelScope.launch(Dispatchers.IO) {
                     dao.deleteSelectedQuestion(question = question)
                     selectedQuestion.remove(question)
-
                 }
             } catch (e: SQLiteConstraintException) {
-
+                println("FAILURE : deleteQuestion")
             }
         }
     }
@@ -241,29 +206,9 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         try {
             viewModelScope.launch(Dispatchers.IO) {
                 questionFlow = dao.loadQuestion(idsujet.value)
-                println("SUCCESS")
             }
         } catch (e: SQLiteConstraintException) {
             println("FAILURE")
         }
     }
 }
-/*
-    fun retrieveAssociatedSubject(idSubject :Int ){
-        try {
-            viewModelScope.launch(Dispatchers.IO) {
-                var subj = dao.selectSubject(idSubject)
-                sujet.value = subj
-            }
-        } catch(e: SQLiteConstraintException){
-
-        }
-
-        if(questionFlow == null){
-          //  questionFlow = Flow<List<Question>>()
-        }
-
-
-    }
-
-}*/

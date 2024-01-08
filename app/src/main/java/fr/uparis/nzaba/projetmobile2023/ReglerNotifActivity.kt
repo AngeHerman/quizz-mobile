@@ -165,7 +165,9 @@ fun EcranReglagePortrait(model: ReglerNotifViewModel = viewModel(),onMenuIconCli
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        NavHost(navController = navController , startDestination = "notif") {
+        NavHost(navController = navController ,
+            startDestination = "notif",
+            modifier = Modifier.padding(padding)) {
             composable("notif") {
                 Column(
                     modifier = Modifier
@@ -209,6 +211,14 @@ fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel(),onMenuIconCl
         initialMinute = prefConfig.m,
         is24Hour = true
     )
+
+    var timePerAnswer by remember {
+        mutableStateOf("")
+    }
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
@@ -216,40 +226,55 @@ fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel(),onMenuIconCl
     }
     Scaffold(
         topBar = { TopBarOther("Réglages", onMenuIconClick) },
+        bottomBar = {
+            SettingsBottomBar(
+                navigateTo = { navController.navigate("notif")},
+                navigateTo2 = { navController.navigate("timeBetweenAnswer") },
+                currentRoute = currentRoute
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        Column {
-            Spacer(modifier = Modifier.height(70.dp))
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxHeight()
-            ) {
-                //Spacer(modifier = Modifier.width(60.dp))
-                Box(modifier = Modifier.padding(start = 16.dp)) {
-                    TimePicker(
-                        state = clockState,
-                        layoutType = TimePickerLayoutType.Horizontal,
+        NavHost(
+            modifier = Modifier.padding(padding),
+            navController = navController ,
+            startDestination = "notif"){
+            composable("notif") {
+                Column {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxHeight()
-                    )
-                }
-                Spacer(modifier = Modifier.width(70.dp))
-                Column((Modifier.padding(padding)), horizontalAlignment = Alignment.CenterHorizontally) {
-                    //Text("Choisi l'heure de rappel du jeu", fontSize = 30.sp)
-                    FloatingActionButton(onClick = {
-                        permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                        val newConfig = TimeConfig(
-                            clockState.hour,
-                            clockState.minute
-                        )
-                        Log.d("Periodic", "config=$newConfig")
-                        model.save(newConfig)
-                        model.schedule(newConfig)
-                    }) {
-                        Text(text = "Enregistrer", Modifier.padding(5.dp))
+                    ) {
+                        //Spacer(modifier = Modifier.width(60.dp))
+                        Box(modifier = Modifier.padding(start = 16.dp)) {
+                            TimePicker(
+                                state = clockState,
+                                layoutType = TimePickerLayoutType.Horizontal,
+                                modifier = Modifier.fillMaxHeight()
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(70.dp))
+                        Column((Modifier.padding(padding)), horizontalAlignment = Alignment.CenterHorizontally) {
+                            //Text("Choisi l'heure de rappel du jeu", fontSize = 30.sp)
+                            FloatingActionButton(onClick = {
+                                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                val newConfig = TimeConfig(
+                                    clockState.hour,
+                                    clockState.minute
+                                )
+                                Log.d("Periodic", "config=$newConfig")
+                                model.save(newConfig)
+                                model.schedule(newConfig)
+                            }) {
+                                Text(text = "Enregistrer", Modifier.padding(5.dp))
+                            }
+                        }
                     }
                 }
             }
+            composable("timeBetweenAnswer"){
+                MenuChangementTemps(timePerAnswer = timePerAnswer, changeTimePerAnswer = {timePerAnswer = it})
+            }
         }
-
     }
 }
 
@@ -277,24 +302,26 @@ fun DrawerItem(text: String, onClick: () -> Unit) {
 fun MenuChangementTemps(timePerAnswer : String,
                         changeTimePerAnswer : (String) -> Unit,
                         model: ReglerNotifViewModel = viewModel()){
-    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(modifier = Modifier.height(200.dp))
-        Text(text = "Choissisez un temps de réponse par question :", modifier = Modifier.padding(10.dp))
-        TextfieldQuestion(
-            text = "",
-            addToString = changeTimePerAnswer,
-            value = timePerAnswer
-        )
-        Button(onClick = { model.saveTime(timePerAnswer.toInt()) }) {
-            Text("Enregistrer")
-        }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "Choissisez un temps de réponse par question :", modifier = Modifier.padding(10.dp))
+            TextfieldQuestion(
+                text = "",
+                addToString = changeTimePerAnswer,
+                value = timePerAnswer
+            )
+            Button(onClick = { model.saveTime(timePerAnswer.toInt()) }) {
+                Text("Enregistrer")
+            }
     }
 }
 @Composable
 fun SettingsBottomBar(navigateTo: () -> Unit,
                      navigateTo2: () -> Unit,
                      currentRoute: String?){
-    BottomAppBar{
+    BottomAppBar(modifier = Modifier.height(60.dp)){
         MyBottomBarItem(
             navigateTo = navigateTo,
             routeCheck = currentRoute == "notif",
