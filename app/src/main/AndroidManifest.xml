@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:name=".JeuxApplication"
         android:allowBackup="true"
@@ -18,7 +19,11 @@
         <activity
             android:name=".MemorisationActivity"
             android:exported="false"
-            android:label="@string/title_activity_memorisation"
+            android:label="@string/title_activity_memorisation"/>
+        <activity
+            android:name=".TelechargerQuestionActivity"
+            android:exported="false"
+            android:label="@string/title_activity_telecharger_question"
             android:theme="@style/Theme.Projetmobile2023" />
         <activity
             android:name=".GererQuestionsActivity"

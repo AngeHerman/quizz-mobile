@@ -2,4 +2,5 @@
     <string name="app_name">projetmobile2023</string>
     <string name="title_activity_gerer_jeux">GererJeux</string>
     <string name="title_activity_regler_notif">ReglerNotifActivity</string>
+    <string name="title_activity_telecharger_question">TelechargerQuestionActivity</string>
 </resources>
