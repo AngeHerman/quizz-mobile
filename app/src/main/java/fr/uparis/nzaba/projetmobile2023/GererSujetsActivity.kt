@@ -49,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -323,8 +324,8 @@ fun UnSujet(
 ) {
 
     val col=when{
-        index%2==0 -> colorResource(id = R.color.purple_200)
-        else -> colorResource(id = R.color.purple_700 )
+        index%2==0 -> MaterialTheme.colorScheme.secondary
+        else ->  MaterialTheme.colorScheme.tertiary
     }
     Card(
         Modifier
@@ -333,8 +334,7 @@ fun UnSujet(
         colors = CardDefaults.cardColors(containerColor = col)
     ) {
         Row{
-            Text("$index")
-            Text(item.libelleSujet, fontSize = 18.sp, modifier=Modifier.weight(1f))
+            Text(item.libelleSujet, fontSize = 18.sp, modifier=Modifier.weight(1f).padding(5.dp))
             Button(onClick = {
                 remplir(item)
                 if (portrait){

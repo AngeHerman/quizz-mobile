@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.uparis.nzaba.projetmobile2023.JeuxApplication
@@ -25,6 +27,8 @@ import kotlinx.coroutines.flow.toList
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class GererQuestionViewModel (private val application: Application) : AndroidViewModel(application) {
 
@@ -38,32 +42,34 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
     var subjectID = mutableStateOf(0)
 
     var choiceText = mutableStateOf("")
-    var rightChoices = mutableStateListOf<Choix>()
     var choiceList = mutableStateListOf<Choix>()
 
     var error = mutableStateOf(false)
+
     var selectedQuestion = mutableStateListOf<Question>()
+    var selectedAnswers = mutableStateListOf<Choix>()
+
     var idsujet = mutableStateOf(2)
     var sujetsFlow = dao.loadSujet()
     var questionFlow = dao.loadQuestion(idsujet.value)
     var questionID = mutableStateOf(1)
+    var choiceFlow = dao.loadChoixReponse(questionID.value)
+
 
     var questionList = mutableListOf<Question>()
+    var answerList = mutableListOf<Choix>()
 
-    fun addChoiceText(text : String){
-        choiceText.value = text
-    }
-    fun addRightChoice(rightAnswer : Int){
-        //rightChoice.value = rightAnswer
 
-    }
-    fun addAnswer(answer : String){
-        repField.value = answer
+    fun retrieveChoices(idQuestion: Int){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                choiceFlow =  dao.loadChoixReponse(idQuestion)
+            }catch (e: SQLiteConstraintException){
+                println("Erreur DB !")
+            }
+        }
     }
 
-    fun addQuestionText(question : String){
-        questionField.value = question
-    }
     @Composable
     fun setQuestionList(){
         questionList = questionFlow.collectAsState(listOf()).value.filter {
@@ -95,10 +101,49 @@ class GererQuestionViewModel (private val application: Application) : AndroidVie
         choiceList.add(choice)
     }
 
-    fun removeFromChoiceList(choice : Choix){
-        choiceList.remove(choice)
-    }
 
+    private fun changeQuestionStatus(question: Question,status : Int){
+
+        var newStatus = when{
+            status > 0 -> status
+            else -> 1
+        }
+        val currDate = Calendar.getInstance()
+        //2.0.pow(newStatus - 1.toDouble()).toInt()
+        currDate.add(Calendar.DATE, 0)
+
+        val date = SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE)
+        val newDateStr = date.format(currDate.time)
+
+        val updatedQuestion = question.copy(statut = newStatus, nextDate = newDateStr)
+        addQuestion(updatedQuestion)
+    }
+    fun checkAnswer(idQuestion: Int,rep : String): Boolean{
+        var bool = false
+        val q = questionList.find {it.idQuestion == idQuestion}?.apply {
+            var status = this.statut
+
+            if (this.qcm == 0) {
+                if (rep.lowercase().replace(" ", "") == this.rep.lowercase().replace(" ", "")) {
+                    status++
+                    bool = true
+                }else{
+                    status--
+                }
+            } else {
+                val answers = answerList.filter { it.bon }
+                if(selectedAnswers.containsAll(answers) && selectedAnswers.size == answers.size){
+                    status++
+                    bool = true
+                }else{
+                    status--
+
+                }
+            }
+            changeQuestionStatus(this,status)
+        }
+        return bool
+    }
     fun fillDBwithChoiceList() {
         var r = viewModelScope.launch {
             val listchoix = choiceList.toList()

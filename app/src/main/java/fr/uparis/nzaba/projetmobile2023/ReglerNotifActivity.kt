@@ -19,9 +19,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -37,8 +44,11 @@ import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +56,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import fr.uparis.nzaba.projetmobile2023.data.Screen
 import fr.uparis.nzaba.projetmobile2023.data.TimeConfig
 import fr.uparis.nzaba.projetmobile2023.model.ReglerNotifViewModel
@@ -127,6 +141,7 @@ fun EcranReglagePortrait(model: ReglerNotifViewModel = viewModel(),onMenuIconCli
         initialMinute = prefConfig.m,
         is24Hour = true
     )
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
@@ -134,28 +149,50 @@ fun EcranReglagePortrait(model: ReglerNotifViewModel = viewModel(),onMenuIconCli
     }
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(        topBar = { TopBarOther("Réglages heure", onMenuIconClick) },
+    var timePerAnswer by remember {
+        mutableStateOf("")
+    }
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    Scaffold(topBar = { TopBarOther("Réglages", onMenuIconClick) },
+        bottomBar = {
+            SettingsBottomBar(
+                navigateTo = { navController.navigate("notif")},
+                navigateTo2 = { navController.navigate("timeBetweenAnswer") },
+                currentRoute = currentRoute
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Spacer(modifier = Modifier.height(10.dp))
-            TimePicker(state = clockState, layoutType = TimePickerLayoutType.Vertical)
-            FloatingActionButton(onClick = {
-                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
-                val newConfig = TimeConfig(
-                    clockState.hour,
-                    clockState.minute
-                )
-                Log.d("Periodic", "config=$newConfig")
-                model.save(newConfig)
-                model.schedule(newConfig)
-            }) {
-                Text("Enregistrer")
+        NavHost(navController = navController , startDestination = "notif") {
+            composable("notif") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    TimePicker(state = clockState, layoutType = TimePickerLayoutType.Vertical)
+                    FloatingActionButton(onClick = {
+                        permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        val newConfig = TimeConfig(
+                            clockState.hour,
+                            clockState.minute
+                        )
+                        Log.d("Periodic", "config=$newConfig")
+                        model.save(newConfig)
+                        model.schedule(newConfig)
+                    }) {
+                        Text("Enregistrer", modifier = Modifier.padding(10.dp))
+                    }
+                }
+            }
+            composable("timeBetweenAnswer"){
+                MenuChangementTemps(timePerAnswer = timePerAnswer, changeTimePerAnswer = {timePerAnswer = it})
             }
         }
     }
@@ -178,7 +215,7 @@ fun EcranReglageLandscape(model: ReglerNotifViewModel = viewModel(),onMenuIconCl
         Log.d("permissions", if(it)"granted" else "denied")
     }
     Scaffold(
-        topBar = { TopBarOther("Réglages heure", onMenuIconClick) },
+        topBar = { TopBarOther("Réglages", onMenuIconClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Column {
             Spacer(modifier = Modifier.height(70.dp))
@@ -236,7 +273,42 @@ fun DrawerItem(text: String, onClick: () -> Unit) {
             .padding(16.dp)
     )
 }
-
+@Composable
+fun MenuChangementTemps(timePerAnswer : String,
+                        changeTimePerAnswer : (String) -> Unit,
+                        model: ReglerNotifViewModel = viewModel()){
+    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(modifier = Modifier.height(200.dp))
+        Text(text = "Choissisez un temps de réponse par question :", modifier = Modifier.padding(10.dp))
+        TextfieldQuestion(
+            text = "",
+            addToString = changeTimePerAnswer,
+            value = timePerAnswer
+        )
+        Button(onClick = { model.saveTime(timePerAnswer.toInt()) }) {
+            Text("Enregistrer")
+        }
+    }
+}
+@Composable
+fun SettingsBottomBar(navigateTo: () -> Unit,
+                     navigateTo2: () -> Unit,
+                     currentRoute: String?){
+    BottomAppBar{
+        MyBottomBarItem(
+            navigateTo = navigateTo,
+            routeCheck = currentRoute == "notif",
+            icon = {Icon(Icons.Default.DateRange,"")},
+            rowScope = this
+        )
+        MyBottomBarItem(
+            navigateTo = navigateTo2,
+            routeCheck = currentRoute == "timeBetweenAnswer",
+            icon = { Icon(Icons.Default.Build,"")},
+            rowScope = this
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable

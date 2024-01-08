@@ -24,11 +24,23 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class ReglerNotifViewModel (private val application: Application) : AndroidViewModel(application){
     private val KEY_H = intPreferencesKey("hour")
     private val KEY_M = intPreferencesKey("minute")
+    private val KEY_TIME = intPreferencesKey("time")
     private val mystore = application.dataStore
     val prefConfig = mystore.data.map {
         TimeConfig(
             it[KEY_H] ?: 8, it[KEY_M] ?: 0,
         )
+    }
+    val defaultConfig = mystore.data.map {
+        it[KEY_TIME] ?: 30
+    }
+
+    fun saveTime(timePerAnswer : Int){
+        viewModelScope.launch {
+            mystore.edit {
+                it[KEY_TIME] = timePerAnswer
+            }
+        }
     }
 
     fun save(config: TimeConfig) {

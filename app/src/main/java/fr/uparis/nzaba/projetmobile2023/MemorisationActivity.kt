@@ -2,6 +2,8 @@ package fr.uparis.nzaba.projetmobile2023
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.CountDownTimer
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -20,10 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -57,10 +61,16 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import fr.uparis.nzaba.projetmobile2023.data.Choix
+import fr.uparis.nzaba.projetmobile2023.model.ReglerNotifViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlin.concurrent.timer
 
 
@@ -108,19 +118,85 @@ fun StartingPage(subjectList: List<Sujet>,
 
 
 }
-fun QcmQuestion(){
+@SuppressLint("UnrememberedMutableState")
+@Composable
+fun QcmQuestion(
+    answer : Choix,
+    selectedAnswers: List<Choix>,
+    addMethod : (Choix) -> Unit,
+    deleteFromList : (Choix) -> Unit
 
-}
+    ){
+        Card(
+            modifier = Modifier
+                .padding(horizontal = 50.dp, vertical = 15.dp)
+                .background(Color.Transparent)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(2.dp, Color.Black)
+        ) {
+            Row {
+                Text(text = answer.texte, modifier = Modifier.padding(15.dp))
+                Column(horizontalAlignment = Alignment.End) {
+                    Row{
+                        SelectElementCheckBox(
+                            element = answer,
+                            selectedElements = selectedAnswers,
+                            addMethod = addMethod,
+                            deleteFromList = deleteFromList
+                        )
+                    }
+
+                }
+
+
+            }
+        }
+    }
+
+
+
+
 @Composable
 fun SimpleQuestion(
-    questionText: String,
     answer: String,
-    changeAnswer: (String) -> Unit,
-    number: Int,
-    nextQuestion: () -> Unit,
-    timeLeft: Int,
-    decreaseTime: (Int) -> Unit
+    changeAnswer: (String) -> Unit
 ){
+        Box(contentAlignment = Alignment.Center) {
+            Column {
+                Card(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .background(Color.Transparent),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(2.dp, Color.Black)
+                ) {
+                    TextField(
+                        value = answer,
+                        onValueChange = changeAnswer,
+                        modifier = Modifier.size(1000.dp, 300.dp),
+                        placeholder = { Text("Veuillez écrire votre réponse !") }
+                    )
+                }
+
+            }
+
+        }
+}
+@Composable
+fun QuestionDisplay(question: Question,
+                    answer: String,
+                    changeAnswer : (String) -> Unit,
+                    time : Int,
+                    number: Int,
+                    nextQuestion: () -> Unit,
+                    passQuestion: () -> Unit,
+                    answerList: List<Choix>,
+                    selectedAnswers: List<Choix>,
+                    addMethod : (Choix) -> Unit,
+                    deleteFromList : (Choix) -> Unit){
+
+
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
@@ -130,111 +206,112 @@ fun SimpleQuestion(
                     textAlign = TextAlign.Center
                 )
             }
+
         }
-        item {
-            Box(contentAlignment = Alignment.Center) {
-                Column {
-                    Card(
-                        modifier = Modifier
-                            .padding(15.dp)
-                            .fillMaxWidth(),
-                        shape = RoundedCornerShape(1.dp),
-                        border = BorderStroke(1.dp, Color.Black)
+        item{
+            Spacer(modifier = Modifier.padding(10.dp))
+            Card(
+                modifier = Modifier
+                    .padding(15.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(1.dp),
+                border = BorderStroke(1.dp, Color.Black)
 
-                    ) {
-                        Text(
-                            questionText,
-                            modifier = Modifier.padding(10.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Spacer(modifier = Modifier.padding(10.dp))
-                    Card(
-                        modifier = Modifier
-                            .padding(5.dp)
-                            .background(Color.Transparent),
-                        shape = RoundedCornerShape(10.dp),
-                        border = BorderStroke(2.dp, Color.Black)
-                    ) {
-                        TextField(
-                            value = answer,
-                            onValueChange = changeAnswer,
-                            modifier = Modifier.size(1000.dp, 300.dp),
-                            placeholder = { Text("Veuillez écrire votre réponse !") }
-                        )
-                    }
-
-                }
-
+            ) {
+                Text(
+                    question.texte,
+                    modifier = Modifier.padding(10.dp),
+                    textAlign = TextAlign.Center
+                )
             }
         }
         item {
-            Row{
-                Spacer(modifier = Modifier.width(80.dp))
-                Button(modifier = Modifier.padding(10.dp),onClick = nextQuestion) {
+            if (question.qcm == 0) SimpleQuestion(
+                answer = answer,
+                changeAnswer = changeAnswer
+            )
+        }
+        if (question.qcm == 1 && answerList.isNotEmpty()) {
+            itemsIndexed(answerList) {
+                index,item ->
+                QcmQuestion(
+                    answer = item,
+                    selectedAnswers = selectedAnswers,
+                    addMethod = addMethod,
+                    deleteFromList = deleteFromList
+                )
+            }
+        }
+
+        item {
+            Row {
+                Spacer(modifier = Modifier.width(200.dp))
+                Button(modifier = Modifier.padding(10.dp), onClick = nextQuestion) {
                     Text(text = "Prochaine question")
-                } 
+                }
             }
-         
+
         }
         item {
-                BasicCountdownTimer(timeLeft,decreaseTime)
-
-            
+            BasicCountdownTimer(passQuestion = passQuestion,time = time)
         }
     }
 
 }
-@Composable
-fun QuestionDisplay(question: Question,
-                    answer: String,
-                    changeAnswer : (String) -> Unit,
-                    number: Int,
-                    nextQuestion: () -> Unit,
-                    timeLeft : Int,
-                    decreaseTime : (Int) -> Unit){
-
-
-        if(question.qcm == 0) SimpleQuestion(
-            questionText = question.texte,
-            answer = answer,
-            changeAnswer = changeAnswer,
-            number,
-            nextQuestion,
-            timeLeft,
-            decreaseTime)
-
-
-
-
-}
 
 @Composable
-fun BasicCountdownTimer(timeLeft : Int,
-                        decreaseTime : (Int) -> Unit) {
-
+fun BasicCountdownTimer(passQuestion: () -> Unit,
+                        time : Int) {
+    var timeLeft by remember {
+        mutableIntStateOf(time)
+    }
     LaunchedEffect(key1 = timeLeft) {
         while (timeLeft > 0) {
             delay(1000L)
-            decreaseTime(timeLeft)
+            timeLeft--
         }
     }
-
-    Text(text = "$timeLeft",modifier = Modifier.padding(5.dp))
+    if(timeLeft == 0) passQuestion()
+    Text("$timeLeft",Modifier.padding(10.dp))
 }
 @Composable
-fun PageStatistique(){
-    Text("Page Statistique", modifier = Modifier.padding(15.dp))
+fun PageStatistique(correctAnswers : Int,
+                    questionsNumber : Int){
+    Column(Modifier.padding(10.dp)) {
+        Text("Resultat ", modifier = Modifier.padding(15.dp))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Nombres de bonnes réponses !")
+            Row {
+                Text("$correctAnswers/$questionsNumber", modifier = Modifier.padding(10.dp))
+            }
+        }
+
+        Row{
+            //Text("Temps de réponse moyen : $avgTime",modifier = Modifier.padding(10.dp))
+        }
+    }
+}
+
+@Composable
+fun BlankPage(){
+    Column(horizontalAlignment = Alignment.CenterHorizontally){
+        Text("Veuillez repasser dans quelques jours\n pour vous entrainer",Modifier.padding(15.dp))
+        Text("Ou ajouter d'autres questions !",Modifier.padding(15.dp))
+    }
 }
 
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel()){
+fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel(),
+                          model2: ReglerNotifViewModel = viewModel(),
+){
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var selectedSubject by remember { mutableStateOf(Sujet(-1, "")) }
     var questions: MutableList<Question>
+
+    var selectedAnswerList = remember { model.selectedAnswers }
 
     var answer by remember {
         mutableStateOf("")
@@ -246,13 +323,18 @@ fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel()){
     var questionRetrieve by remember {
         mutableStateOf(false)
     }
-    var timeLeft by remember { mutableStateOf(30) }
+    var nextQuestion by remember { mutableStateOf(false) }
+    val time = runBlocking {
+        model2.defaultConfig.first()
+    }
+
+    var goodAnswers by remember {
+        mutableStateOf(0)
+    }
 
 
-    //timer("",false)
+
     Scaffold(
-        topBar = {},
-        bottomBar = {},
         snackbarHost = { SnackbarHost(snackbarHostState) }) {
             paddingV ->
         NavHost(
@@ -281,113 +363,84 @@ fun ScaffoldMemorisation( model: GererQuestionViewModel = viewModel()){
 
                 val ind = it.arguments?.getString("ind")!!.toInt()
 
-
                 if(questions.isNotEmpty() && questions.size > 1 && ind <= questions.size - 1){
+                    if(questions[ind].qcm == 1){
+                        model.questionID.value = questions[ind].idQuestion
+                        model.retrieveChoices(questions[ind].idQuestion)
+                        model.answerList = model.choiceFlow.collectAsState(listOf()).value.toMutableList()
+                    }
                     QuestionDisplay(
                         question = questions[ind],
                         answer = answer,
                         changeAnswer = {answer =it},
+                        time = time,
                         number = index + 1,
                         nextQuestion = {
-
+                            if(model.checkAnswer(questions[ind].idQuestion,answer))
+                                goodAnswers++
                             if(index <= questions.size - 1) {
                                 NextQuestion(
                                     clearAnswer = { answer = "" },
                                     increaseIndex = { index++ },
                                     navigateTo = {
                                         navController.navigate("questions/$index") {
-                                            popUpTo(
-                                                "start"
-                                            )
+                                            popUpTo("start")
                                         }
-                                    },
-                                    resetTime = { timeLeft = 30 }
-
+                                    }
                                 )
                             }
                         },
-                        timeLeft = timeLeft,
-                        decreaseTime = {timeLeft --}
+                        passQuestion = {nextQuestion = true},
+                        answerList = model.answerList,
+                        selectedAnswers = selectedAnswerList,
+                        addMethod = {selectedAnswerList.add(it)},
+                        deleteFromList = {selectedAnswerList.remove(it)}
                         )
                 }else if(ind > questions.size - 1){
                     navController.navigate("stat")
-                }
-
-
-                }
-            composable("stat"){
-               // PageStatistique()
-                Card {
-                    Text("Text")
+                } else{
+                    navController.navigate("noQuestions")
                 }
             }
+            composable("stat"){
+                PageStatistique(goodAnswers,model.questionList.size)
 
-
+            }
+            composable("noQuestions"){
+                BlankPage()
+                }
             }
         }
     if(questionRetrieve) model.setQuestionList()
 
-    if(timeLeft == 0) {
-        if (index <= model.questionList.size - 1) {
+    if(nextQuestion){
+        if(index <= model.questionList.size - 1) {
             NextQuestion(
                 clearAnswer = { answer = "" },
                 increaseIndex = { index++ },
-                navigateTo = { navController.navigate("questions/$index") { popUpTo("start") } },
-                resetTime = { timeLeft = 30 }
-
+                navigateTo = {
+                    navController.navigate("questions/$index") {
+                        popUpTo("start")
+                    }
+                }
             )
-        }else{
-            NextQuestion(
-                clearAnswer = { answer = "" },
-                increaseIndex = { index = 0 },
-                navigateTo = { navController.navigate("stat") { popUpTo("start") } },
-                resetTime = { timeLeft = 30 }
-
-            )
-
+            println("INDEX : $index")
         }
+        nextQuestion = false
     }
+
 }
 
 
 fun NextQuestion(
     clearAnswer : () -> Unit,
     increaseIndex : () -> Unit,
-    navigateTo: () -> Unit,
-    resetTime: () -> Unit){
+    navigateTo: () -> Unit){
 
     clearAnswer()
     increaseIndex()
     navigateTo()
-    resetTime()
 
-}
-
-
-@Composable
-fun GetQuestions(model:GererQuestionViewModel,
-                 id : Int,
-                 backToFalse : (List<Question>) -> Unit) {
-
-
-
-    val questions = model.questionFlow.collectAsState(listOf()).value.filter {
-        val day =
-            SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE).parse(it.nextDate)
-        val today = Calendar.getInstance().time
-        println("Boolean :" + (day <= today))
-        day <= today
-    }
-
-    backToFalse(questions.shuffled())
-
-}
-@Composable
-fun Greeting2(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
 }
 
 @Preview(showBackground = true)
