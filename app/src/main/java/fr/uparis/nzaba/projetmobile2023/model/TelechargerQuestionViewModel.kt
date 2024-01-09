@@ -80,6 +80,7 @@ class TelechargerQuestionViewModel (private val application: Application) : Andr
     fun onClick(){
         //ShowToast("Id est ${selectedSujetId.value} et value est ${value.value}")
         if(selectedSujetId.value!= 0 && value.value != "") startDownload()
+        else ShowToast("Choisissez un sujet et mettez un lien")
     }
 
     fun onSelectSujet(s : Sujet){
@@ -96,9 +97,14 @@ class TelechargerQuestionViewModel (private val application: Application) : Andr
     private fun startDownload(){
         ShowToast("Started")
         val uri = Uri.parse(value.value)
-        val request = DownloadManager.Request(uri).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-        idLoad = downloadManager.enqueue(request)
-        Log.d("start", "download demandé $idLoad")
+        try {
+            val request = DownloadManager.Request(uri).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+            idLoad = downloadManager.enqueue(request)
+            Log.d("start", "download demandé $idLoad")
+        }catch (e :Exception){
+            ShowToast("Regardez bien le lien, n'oubliez pas http/https")
+        }
+
     }
 
     private fun ajouterQuestion(q :String, r :String) : Boolean{

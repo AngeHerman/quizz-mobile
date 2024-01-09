@@ -1,10 +1,8 @@
 package fr.uparis.nzaba.projetmobile2023.model
 
 import android.app.Application
-import android.content.Context
 import android.database.sqlite.SQLiteConstraintException
 import android.widget.Toast
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
@@ -36,6 +34,7 @@ class GererSujetViewModel (private val application: Application) : AndroidViewMo
 
     fun versAjout(){
         textBoutonModif.value = "Ajouter"
+        sujetField.value = ""
     }
 
     fun versModif(){
@@ -59,6 +58,7 @@ class GererSujetViewModel (private val application: Application) : AndroidViewMo
                 erreurIns.value= (res.await()== -1L)
                 if(erreurIns.value) ShowToast("Erreur d'insertion")
                 else ShowToast("Insertion réussi")
+                sujetField.value = ""
                 //compteurIns.value ++;
             }
         }else{
@@ -73,9 +73,11 @@ class GererSujetViewModel (private val application: Application) : AndroidViewMo
                     } else {
                         ShowToast("Modification non réussi")
                     }
+                    sujetField.value = ""
                 } catch (e: SQLiteConstraintException) {
                     // Handle the unique constraint violation
                     ShowToast("Erreur: Libellé déjà existant")
+                    sujetField.value = ""
                 }
             }
         }

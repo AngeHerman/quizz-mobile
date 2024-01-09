@@ -3,6 +3,7 @@ package fr.uparis.nzaba.projetmobile2023.model
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -15,6 +16,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import fr.uparis.nzaba.projetmobile2023.RappelWorker
 import fr.uparis.nzaba.projetmobile2023.data.TimeConfig
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -35,11 +37,23 @@ class ReglerNotifViewModel (private val application: Application) : AndroidViewM
         it[KEY_TIME] ?: 30
     }
 
-    fun saveTime(timePerAnswer : Int){
-        viewModelScope.launch {
-            mystore.edit {
-                it[KEY_TIME] = timePerAnswer
+    fun saveTime(timePerAnswer : String){
+        val intValue: Int? = timePerAnswer.toIntOrNull()
+        if(intValue == null){
+            ShowToast("Taper un entier s'il vous plaît")
+        }else{
+            viewModelScope.launch {
+                mystore.edit {
+                    it[KEY_TIME] = intValue
+                }
             }
+            ShowToast("Enregistré")
+        }
+    }
+
+    private fun ShowToast(message: String) {
+        viewModelScope.launch(Dispatchers.Main) {
+            Toast.makeText(getApplication(), message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -50,6 +64,7 @@ class ReglerNotifViewModel (private val application: Application) : AndroidViewM
                 it[KEY_M] = config.m
             }
         }
+        ShowToast("Enregistré")
     }
 
     fun schedule(config: TimeConfig) {

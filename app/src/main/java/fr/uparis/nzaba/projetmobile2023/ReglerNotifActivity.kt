@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.DateRange
@@ -312,7 +311,7 @@ fun MenuChangementTemps(timePerAnswer : String,
                 addToString = changeTimePerAnswer,
                 value = timePerAnswer
             )
-            Button(onClick = { model.saveTime(timePerAnswer.toInt()) }) {
+            Button(onClick = { model.saveTime(timePerAnswer) }) {
                 Text("Enregistrer")
             }
     }
