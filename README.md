@@ -49,4 +49,4 @@ Ce projet est sous la [GNU General Public License v3.0 (GPL v3)](LICENSE). Pour 
 
 ## Auteurs
 - **Ange Herman KOUE-HEMAZRO**
-- **Henri TRAN**
+- **Eric NZABA**
