@@ -1,4 +1,4 @@
-# Quiz Game Mobile (Android)
+# Quizz Game Mobile (Android)
 
 Bienvenue dans le projet GitHub de notre jeu de quiz mobile en Kotlin. Ce jeu vous permet de tester vos connaissances sur différents sujets en répondant à des questions à choix multiple (QCM) ou ouvertes.
 
